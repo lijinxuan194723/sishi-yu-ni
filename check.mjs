@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {parseData,dateKey,companionReply} from './lib/companion.ts';
+const data={name:'我',since:'2024-02-29',messages:[{who:'me',text:'hello'}],tasks:[{id:'1',date:'2026-09-09',text:'散步',done:false}],notes:[{date:'2026-09-09',text:'今天很好'}],checks:['2026-09-09']};
+assert.deepEqual(parseData(JSON.stringify(data)),data);
+assert.throws(()=>parseData(JSON.stringify({...data,since:'2025-02-29'})));
+assert.throws(()=>parseData(JSON.stringify({...data,tasks:[null]})));
+assert.throws(()=>parseData(JSON.stringify({...data,messages:[{who:'evil',text:'hi'}]})));
+assert.throws(()=>parseData('broken'));
+assert.equal(dateKey(new Date(2026,0,1)),'2026-01-01');
+assert.match(companionReply('今天好累'),/辛苦/);
+assert.match(companionReply('晚安'),/晚安/);
+assert.match(companionReply('想你'),/想见到你/);
+assert.match(companionReply('今天看到小猫'),/我在听/);
+console.log('PASS: backup round trip, invalid records and dates, local dates, all reply paths');
