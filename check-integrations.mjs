@@ -22,6 +22,7 @@ const context=chatContext({...data,memory},'测试位置，小雨，出门带伞
 assert.match(context[0].content,/夏彦/);assert.match(context[0].content,/私家侦探/);assert.match(context[1].content,/茉莉花/);assert.match(context[1].content,/叫我小夏/);assert.match(context[1].content,/带伞/);assert.match(context.at(-1).content,/茉莉/);assert.ok(relatedMemories({...data,memory}).some(m=>m.text.includes('茉莉')));
 const roundtrip=parseData(JSON.stringify({...data,memory}));assert.equal(roundtrip.memory.through,memory.through);assert.equal(roundtrip.messages.length,data.messages.length);
 globalThis.fetch=async()=>new Response('{}',{status:401});const failed=[];await assert.rejects(()=>prepareMemory(data,config,m=>failed.push(m)),/密钥/);assert.equal(failed.length,0);assert.equal(data.memory.through,0);
+globalThis.fetch=async()=>Response.json({code:'SITE_AUTH_REQUIRED'},{status:401});await assert.rejects(()=>complete(config,[]),/重新登录/);
 globalThis.fetch=async()=>Response.json({choices:[{finish_reason:'length',message:{content:'被截断'}}]});await assert.rejects(()=>complete(config,[]),/长度/);
 globalThis.fetch=async()=>Response.json({choices:[{message:{content:null}}]});await assert.rejects(()=>complete(config,[]),/有效文本/);
 const signal=new AbortController();signal.abort();globalThis.fetch=async()=>{throw Error('abort');};await assert.rejects(()=>complete(config,[],signal.signal),/已停止/);

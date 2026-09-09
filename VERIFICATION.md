@@ -19,3 +19,13 @@
 - [UNRUN] Browser clicking, phone layout and real reload/restore interaction: run in the visible preview; only non-browser HTTP, code and logic checks performed.
 - [UNRUN] Optional WebMCP navigation contract in a supported browser context.
 - Summary and keyword retrieval are lossy; full transcript is retained and pinned facts can correct omissions. Clearing browser storage removes the records. No background notifications after closing the page.
+
+## 2026-09-09 artwork and chat polish
+- Four supplied clean originals copied byte-for-byte to public/images; no watermark-bearing classroom/cycling images used. CSS frames originals for desktop/mobile, avatar and chat.
+- Chat has its own reusable model configuration form, actual network test, and save action; preserves existing weather configuration. Configured state is not presented as verified connectivity.
+- Composer supports multiline text and ignores IME composition Enter. Existing local data schema and storage key preserved.
+- PASS: all four local image URLs HTTP 200; local model proxy reached DeepSeek and received the expected upstream rejection for a deliberately invalid test key (401). This proves network reachability, not successful authenticated generation.
+- PASS: local weather proxy returned real Open-Meteo data with HTTP 200.
+- PASS: existing data/integration checks, including distinction between expired site login and upstream API-key rejection; TypeScript and production build.
+- [UNRUN] User's actual model API generation and Caiyun Token request: enter credentials in chat/settings and run connection test. No valid credentials provided.
+- [UNRUN] Browser interaction/visual QA: not explicitly requested. Responsive implementation inspected in source only.
