@@ -116,7 +116,7 @@ jobs:
             --out "$APK" \
             "$STAGE/aligned.apk"
 
-          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
           "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
           "$BUILD_TOOLS/aapt" dump badging "$APK" | grep -E 'package:|sdkVersion|targetSdkVersion|application-label:|launchable-activity'
           sha256sum "$APK" | tee "$OUTPUT/Four-Seasons-Luke-Memo-Preview.sha256"
