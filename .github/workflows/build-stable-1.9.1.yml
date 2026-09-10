@@ -1,0 +1,192 @@
+name: Build Android 1.9.1 Stable
+
+on:
+  push:
+    branches:
+      - 'feat/luke-memory-v2-1.9.0'
+    paths:
+      - '.github/workflows/build-stable-1.9.1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-stable-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify 1.9.1 source version
+        run: |
+          grep -q 'android:versionCode="901001"' mobile/android/AndroidManifest.xml
+          grep -q 'android:versionName="1.9.1"' mobile/android/AndroidManifest.xml
+
+      - name: Verify Luke memory knowledge
+        run: node --experimental-strip-types scripts/checks/check-luke-knowledge.mjs
+
+      - name: Verify storage implementation is unchanged from 1.9.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=9a3729ea9ac4b310871fa6cc30c6d50307e3ecea
+          for file in lib/companion.ts lib/use-local-data.ts lib/memos.ts lib/full-backup.ts mobile/android/MainActivity.java; do
+            if ! git diff --quiet "$BASE" -- "$file"; then
+              echo "Storage/data-continuity file changed unexpectedly: $file" >&2
+              git diff "$BASE" -- "$file"
+              exit 1
+            fi
+          done
+          UNEXPECTED=$(git diff --name-only "$BASE"..HEAD | grep -Ev '^(data/luke/|lib/luke-knowledge\.ts$|lib/model\.ts$|scripts/checks/check-luke-knowledge\.mjs$|mobile/android/AndroidManifest\.xml$|mobile/build-apk\.ps1$|CHANGELOG\.md$|docs/releases/android-1\.9\.1\.md$|\.github/workflows/build-stable-1\.9\.1\.yml$)' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo 'Unexpected files differ from 1.9.0:' >&2
+            printf '%s\n' "$UNEXPECTED" >&2
+            exit 1
+          fi
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform and build tools
+        run: yes | sdkmanager 'platforms;android-35' 'build-tools;35.0.0' >/dev/null
+
+      - name: Restore continuity signing key
+        id: signing-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/luke-preview.p12
+          key: luke-preview-signing-v1
+
+      - name: Require existing 1.9.0 signing key
+        if: steps.signing-cache.outputs.cache-hit != 'true'
+        run: |
+          echo 'Continuity signing key was not restored. Refusing to create a new key because that would break in-place upgrades.' >&2
+          exit 1
+
+      - name: Download released 1.9.0 APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/old"
+          gh release download android-four-seasons-v1.9.0 \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'Four-Seasons-Luke-1.9.0.apk' \
+            --dir "$RUNNER_TEMP/old"
+          test -f "$RUNNER_TEMP/old/Four-Seasons-Luke-1.9.0.apk"
+
+      - name: Build mobile web bundle
+        run: npx vite build --config mobile/vite.config.mts
+
+      - name: Build signed 1.9.1 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ANDROID_JAR="$ANDROID_HOME/platforms/android-35/android.jar"
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          STAGE="$RUNNER_TEMP/luke-stable-191"
+          OUTPUT="$GITHUB_WORKSPACE/outputs/android"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE/assets/web" "$STAGE/classes" "$STAGE/dex" "$STAGE/native" "$OUTPUT"
+          cp -R work/mobile-web/. "$STAGE/assets/web/"
+          cp mobile/android/MainActivity.java "$STAGE/native/MainActivity.java"
+          cp -R mobile/android/res "$STAGE/native/res"
+          cp mobile/android/AndroidManifest.xml "$STAGE/native/AndroidManifest.xml"
+
+          # Keep the exact Android installation identity used by the published 1.9.0 stable package.
+          sed -i \
+            -e 's/package="com.luke.summer"/package="com.luke.summer.preview"/' \
+            -e 's/android:name="\.MainActivity"/android:name="com.luke.summer.MainActivity"/' \
+            -e 's/android:versionCode="[0-9]*"/android:versionCode="901001"/' \
+            -e 's/android:versionName="[^"]*"/android:versionName="1.9.1"/' \
+            "$STAGE/native/AndroidManifest.xml"
+
+          javac -encoding UTF-8 --release 8 \
+            -classpath "$ANDROID_JAR" \
+            -d "$STAGE/classes" \
+            "$STAGE/native/MainActivity.java"
+
+          mapfile -d '' CLASSES < <(find "$STAGE/classes" -name '*.class' -print0)
+          "$BUILD_TOOLS/d8" --lib "$ANDROID_JAR" --min-api 26 --output "$STAGE/dex" "${CLASSES[@]}"
+
+          "$BUILD_TOOLS/aapt" package -f \
+            -M "$STAGE/native/AndroidManifest.xml" \
+            -S "$STAGE/native/res" \
+            -A "$STAGE/assets" \
+            -I "$ANDROID_JAR" \
+            -F "$STAGE/unsigned.apk"
+
+          (
+            cd "$STAGE/dex"
+            "$BUILD_TOOLS/aapt" add "$STAGE/unsigned.apk" classes.dex
+          )
+
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$STAGE/unsigned.apk" "$STAGE/aligned.apk"
+          APK="$OUTPUT/Four-Seasons-Luke-1.9.1.apk"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks ~/.android/luke-preview.p12 \
+            --ks-key-alias luke-preview \
+            --ks-pass pass:android-preview \
+            --key-pass pass:android-preview \
+            --out "$APK" \
+            "$STAGE/aligned.apk"
+
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | grep -E 'package:|sdkVersion|targetSdkVersion|application-label:|launchable-activity'
+          sha256sum "$APK" | tee "$OUTPUT/Four-Seasons-Luke-1.9.1.sha256"
+
+      - name: Verify 1.9.0 to 1.9.1 in-place upgrade identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          OLD="$RUNNER_TEMP/old/Four-Seasons-Luke-1.9.0.apk"
+          NEW="$GITHUB_WORKSPACE/outputs/android/Four-Seasons-Luke-1.9.1.apk"
+
+          OLD_CERT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$OLD" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)
+          NEW_CERT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$NEW" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)
+          test -n "$OLD_CERT" && test "$OLD_CERT" = "$NEW_CERT"
+
+          OLD_BADGING=$("$BUILD_TOOLS/aapt" dump badging "$OLD" | head -1)
+          NEW_BADGING=$("$BUILD_TOOLS/aapt" dump badging "$NEW" | head -1)
+          OLD_PACKAGE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/.*name='\([^']*\)'.*/\1/p")
+          NEW_PACKAGE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/.*name='\([^']*\)'.*/\1/p")
+          OLD_CODE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
+          NEW_CODE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
+          OLD_VERSION=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
+          NEW_VERSION=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
+
+          test "$OLD_PACKAGE" = 'com.luke.summer.preview'
+          test "$NEW_PACKAGE" = "$OLD_PACKAGE"
+          test "$OLD_CODE" = '901000'
+          test "$NEW_CODE" = '901001'
+          test "$NEW_CODE" -gt "$OLD_CODE"
+          test "$OLD_VERSION" = '1.9.0'
+          test "$NEW_VERSION" = '1.9.1'
+          "$BUILD_TOOLS/aapt" dump badging "$NEW" | grep -q "application-label:'四时与你'"
+          echo "UPGRADE_OK package=$NEW_PACKAGE oldCode=$OLD_CODE newCode=$NEW_CODE cert=$NEW_CERT"
+
+      - name: Upload verified stable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Four-Seasons-Luke-1.9.1-Stable
+          path: |
+            outputs/android/Four-Seasons-Luke-1.9.1.apk
+            outputs/android/Four-Seasons-Luke-1.9.1.sha256
+          if-no-files-found: error
+          retention-days: 30
