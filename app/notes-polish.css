@@ -1,0 +1,10 @@
+/* Unified notes page: keep the app-level "时光手记" header as the only page header. */
+.app-shell:has(.main-nav button:nth-child(5)[data-active]) .page-bar .bar-actions {
+  display: none !important;
+}
+
+/* The unified notes workspace has its own legacy title row (NOTES / 笔记).
+   It is redundant now that the app-level header is retained. */
+.app-shell:has(.main-nav button:nth-child(5)[data-active]) header:has(button[aria-label="搜索笔记"]) {
+  display: none !important;
+}
