@@ -7,4 +7,5 @@ import '../app/notes-polish.css';
 import '../app/startup-splash.css';
 import '../app/startup-reveal.css';
 import '../app/startup-nav.css';
+import '../app/motion-polish.css';
 createRoot(document.getElementById('root')!).render(<Page/>);
