@@ -1,0 +1,58 @@
+name: Publish Android 1.9.0 Stable
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-stable-1.9.0.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: 8727ecb628736219fa2d17ef05559672dc5a2101
+
+      - name: Download verified stable artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/10147921825/zip" > "$RUNNER_TEMP/stable.zip"
+          mkdir -p "$RUNNER_TEMP/stable"
+          unzip -q "$RUNNER_TEMP/stable.zip" -d "$RUNNER_TEMP/stable"
+          test -f "$RUNNER_TEMP/stable/outputs/android/Four-Seasons-Luke-1.9.0.apk"
+          test -f "$RUNNER_TEMP/stable/outputs/android/Four-Seasons-Luke-1.9.0.sha256"
+
+      - name: Verify release APK digest
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/stable/outputs/android/Four-Seasons-Luke-1.9.0.apk"
+          ACTUAL=$(sha256sum "$APK" | awk '{print $1}')
+          EXPECTED='dd1aea3fe68b426d1984106749209581c87ba2b2abe2a0da675d8d11956c15bd'
+          echo "APK_SHA256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/stable/outputs/android/Four-Seasons-Luke-1.9.0.apk"
+          SHA="$RUNNER_TEMP/stable/outputs/android/Four-Seasons-Luke-1.9.0.sha256"
+          gh release create android-four-seasons-v1.9.0 \
+            "$APK#Four-Seasons-Luke-1.9.0.apk" \
+            "$SHA#Four-Seasons-Luke-1.9.0.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 8727ecb628736219fa2d17ef05559672dc5a2101 \
+            --title '四时与你 1.9.0（Android）' \
+            --notes-file docs/releases/android-1.9.0.md \
+            --latest
