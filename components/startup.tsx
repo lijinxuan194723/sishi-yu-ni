@@ -33,7 +33,7 @@ export function useStartup(ready:boolean){
  },[]);
  useEffect(()=>{
   if(!ready||document.documentElement.dataset.started)return;
-  let cancelled=false,leaveTimer=0,navTimer=0,removeTimer=0,finishTimer=0;
+  let cancelled=false,leaveTimer=0,navTimer=0,fallbackTimer=0,cleanupTimer=0;
   const root=document.documentElement;
   root.dataset.startupPhase='cover';
   root.dataset.startupNav='hidden';
@@ -43,37 +43,28 @@ export function useStartup(ready:boolean){
   splash.setAttribute('aria-label','四时与你正在开启');
   splash.innerHTML=splashMarkup();
   document.body.appendChild(splash);
+  const finish=()=>{
+   if(cancelled||root.dataset.started)return;
+   root.dataset.started='true';root.dataset.startupPhase='done';root.dataset.startupNav='show';splash.remove();
+   cleanupTimer=window.setTimeout(()=>{if(cancelled)return;delete root.dataset.startupPhase;delete root.dataset.startupNav;},80);
+  };
+  const onTransitionEnd=(event:TransitionEvent)=>{if(event.target===splash&&event.propertyName==='transform')finish();};
+  splash.addEventListener('transitionend',onTransitionEnd);
   void (async()=>{
    const photo=document.querySelector<HTMLImageElement>('.hero .season-photo img[src]');
    try{await photo?.decode();}catch{/* A missing photo must not block the app. */}
    await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
    if(cancelled)return;
-   requestAnimationFrame(()=>splash.dataset.show='true');
-   // Reveal the WebView only after the splash already occupies the screen.
+   splash.dataset.show='true';
    window.LukeAndroid?.pageReady?.();
    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
    leaveTimer=window.setTimeout(()=>{
     if(cancelled)return;
-    root.dataset.startupPhase='handoff';
-    splash.dataset.leave='true';
-   },reduced?300:1180);
-   // Bottom navigation is a separate stage: do not let CSS transition-delay decide this.
-   navTimer=window.setTimeout(()=>{
-    if(cancelled)return;
-    root.dataset.startupNav='show';
-   },reduced?420:1700);
-   removeTimer=window.setTimeout(()=>{
-    if(cancelled)return;
-    root.dataset.started='true';
-    root.dataset.startupPhase='done';
-    splash.remove();
-   },reduced?560:2080);
-   finishTimer=window.setTimeout(()=>{
-    if(cancelled)return;
-    delete root.dataset.startupPhase;
-    delete root.dataset.startupNav;
-   },reduced?700:2320);
+    root.dataset.startupPhase='handoff';splash.dataset.leave='true';
+    navTimer=window.setTimeout(()=>{if(!cancelled)root.dataset.startupNav='show';},reduced?40:110);
+    fallbackTimer=window.setTimeout(finish,reduced?260:760);
+   },reduced?260:820);
   })();
-  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(navTimer);clearTimeout(removeTimer);clearTimeout(finishTimer);splash.remove();delete root.dataset.startupPhase;delete root.dataset.startupNav;};
+  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(navTimer);clearTimeout(fallbackTimer);clearTimeout(cleanupTimer);splash.removeEventListener('transitionend',onTransitionEnd);splash.remove();delete root.dataset.startupPhase;delete root.dataset.startupNav;};
  },[ready]);
 }
