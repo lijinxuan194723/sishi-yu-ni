@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {LUKE_KNOWLEDGE,lukeKnowledgeContext,lukeKnowledgeStats,retrieveLukeKnowledge} from '../../lib/luke-knowledge.ts';
+import {chatContext} from '../../lib/model.ts';
 
 const stats=lukeKnowledgeStats();
 assert.equal(stats.total,412);
@@ -28,4 +29,11 @@ const context=lukeKnowledgeContext('你喜欢拍照吗');
 assert.match(context,/SKL-017/);
 assert.match(context,/不自动改写成当前用户亲历/);
 assert.ok(context.length<8000);
-console.log('PASS: 412 Luke memories loaded; category counts, source scope, AU isolation and contextual retrieval verified');
+
+const data={name:'测试',since:'2024-01-01',messages:[{who:'me',text:'你会做饭吗？'}],tasks:[],notes:[],checks:[]};
+const chat=chatContext(data,'');
+assert.match(chat[0].content,/SKL-030/);
+assert.match(chat[0].content,/SKL-032/);
+assert.match(chat[0].content,/夏彦原作人物知识库/);
+assert.equal(chat.at(-1).content,'你会做饭吗？');
+console.log('PASS: 412 Luke memories loaded; category counts, source scope, AU isolation, retrieval and chat-context injection verified');
