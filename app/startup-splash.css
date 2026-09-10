@@ -9,3 +9,6 @@
 .startup-splash[data-leave="true"] .startup-splash-core{opacity:0;transform:translateY(-8px) scale(.985);transition:opacity .52s ease,transform .68s cubic-bezier(.22,.72,.26,1)}
 .startup-splash[data-leave="true"]:before{opacity:.25;transition:opacity .62s ease}
 @media(prefers-reduced-motion:reduce){:root[data-startup-phase="cover"] .app-shell{opacity:0;transform:none;filter:none}:root[data-startup-phase="handoff"] .app-shell{opacity:1;transform:none;filter:none;transition:opacity .18s linear}.startup-splash{transform:none!important;filter:none!important;transition:opacity .18s linear!important}}
+/* Startup curtain disabled for stable WebView rendering. */
+.startup-splash{display:none!important}
+:root[data-startup-phase] .app-shell{opacity:1!important;transform:none!important;filter:none!important;pointer-events:auto!important}

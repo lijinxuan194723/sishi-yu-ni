@@ -4,7 +4,7 @@ export async function swapPhoto(front:HTMLImageElement,back:HTMLImageElement,src
  if(cancelled())return false;
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  // Keep the outgoing frame fully opaque until the incoming frame has finished.
- const fade=back.animate([{opacity:0},{opacity:1}],{duration:reduced?0:650,easing:'linear',fill:'forwards'});
+ const fade=back.animate([{opacity:0},{opacity:1}],{duration:reduced?0:560,easing:'cubic-bezier(.22,.72,.24,1)',fill:'forwards'});
  try{await fade.finished;}catch{return false;}
  back.style.opacity='1';back.style.zIndex='0';front.style.opacity='0';fade.cancel();
  return true;

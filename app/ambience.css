@@ -129,7 +129,7 @@ body{color:var(--scene-ink);background:radial-gradient(ellipse at 0 0,var(--seas
 @property --scene-paper{syntax:'<color>';inherits:true;initial-value:#f3fcf7}
 @property --scene-ink{syntax:'<color>';inherits:true;initial-value:#244b40}
 @property --scene-border{syntax:'<color>';inherits:true;initial-value:#bddbcd}
-:root{transition:--season-ground 1.4s linear,--season-soft 1.4s linear,--season-accent 1.4s linear,--scene-paper 1.4s linear,--scene-ink 1.4s linear,--scene-border 1.4s linear}
+:root{transition:none!important}
 .app-loading{min-height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:#214f4c;color:#ead2a0;font-size:23px;letter-spacing:5px}
 
 
@@ -294,3 +294,32 @@ main>.page-bar{border-radius:0;box-shadow:none;backdrop-filter:none;background:v
 }
 
 @media(max-width:600px){:root[data-keyboard=true] .sidebar{display:none!important}:root[data-keyboard=true] .app-shell main{padding-bottom:8px!important}:root[data-keyboard=true] .app-shell[data-chat=true],:root[data-keyboard=true] .app-shell[data-chat=true]>.app-tabs{height:var(--keyboard-height,100dvh)}:root[data-keyboard=true] .app-shell[data-chat=true] main{padding-bottom:0!important}}
+
+/* Final motion pass: remove hard cuts introduced by the old tuning overrides. */
+:root,body,.app-shell,.app-shell *{transition-property:initial}
+:root,body{transition:background-color 1.2s ease,color 1.2s ease}
+.card,.sidebar,.chat-head,.composer,.chat-tools,.settings,input,textarea,select,.round,.soft-button,.primary{transition:background-color 1.2s ease,border-color 1.2s ease,color 1.2s ease,box-shadow .24s ease,opacity .24s ease,transform .24s ease}
+.season-photo>img{transition:opacity .56s cubic-bezier(.22,.72,.24,1)!important;will-change:opacity}
+:root .main-nav button,:root .main-nav button svg{transition:color .22s ease,background-color .22s ease,opacity .22s ease,transform .22s ease!important}
+.settings [data-slot=tabs-content]:not([hidden]){animation:settings-enter .32s cubic-bezier(.22,.72,.24,1) both}
+.app-shell .light-layer,.settings .light-layer{transition:opacity 1.2s ease!important}
+@media(prefers-reduced-motion:reduce){:root,body,.app-shell,.app-shell *,.season-photo>img{transition:none!important}.settings [data-slot=tabs-content]:not([hidden]){animation:none}}
+
+/* Time notes use the same seasonal tokens as the rest of the app. */
+.memo-board,.memo-board *,.memoGroup,.memo-group,.noteGroup,.note-group{border-color:var(--scene-border)!important;color:var(--scene-ink)}
+.memo-board,.memoGroup,.memo-group,.noteGroup,.note-group{background:var(--scene-paper)!important}
+.memo-board input,.memo-board textarea,.memo-board button,.memoGroup button,.memo-group button,.noteGroup button,.note-group button{color:var(--scene-ink);border-color:var(--scene-border)}
+.memo-board input,.memo-board textarea{background:color-mix(in srgb,var(--season-soft) 32%,var(--scene-paper))!important}
+.memo-board [data-active='true'],.memo-board button[data-selected='true']{background:var(--season-accent)!important;color:var(--scene-paper)!important}
+.memo-board .fab{background:var(--season-accent)!important;color:var(--scene-paper)!important}
+.shell,.shell *{border-color:var(--scene-border)}
+.shell{color:var(--scene-ink)}
+.shell .noteGroup,.shell .note-group,.shell .noteList,.shell .searchBar,.shell .chipRail>button,.shell .noteGroup,.shell .note-group{background:var(--scene-paper);color:var(--scene-ink)}
+.shell .searchBar,.shell .chipRail>button{border-color:var(--scene-border)}
+.shell .chipRail>button[data-active='true'],.shell .fab{background:var(--season-accent);color:var(--scene-paper)}
+.shell .heroHead h2,.shell .sectionHead h3,.shell .noteTitle strong,.shell .noteSummary,.shell .noteMeta,.shell .empty strong,.shell .empty p{color:var(--scene-ink)}
+.shell .searchBar,.shell .noteGroup,.shell .note-group{background:var(--scene-paper)!important}
+.shell .searchBar input{background:transparent!important;color:var(--scene-ink)!important}
+.shell .chipRail>button:not([data-active='true']){background:var(--season-soft)!important;color:var(--scene-ink)!important}
+.shell .noteRow:hover{background:color-mix(in srgb,var(--season-soft) 42%,var(--scene-paper))}
+.shell .empty{color:var(--scene-muted)}
