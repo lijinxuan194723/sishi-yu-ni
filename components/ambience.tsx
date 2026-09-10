@@ -12,25 +12,25 @@ export function useAmbience(paused=false,preview=false){
  return {scene,options,setOptions,appearanceError};
 }
 export const Ambience=memo(function Ambience({scene}:{scene:ReturnType<typeof ambienceAt>|null}){
- const particles=useMemo(()=>{const icons=[Flower2,Sparkles,Leaf,Snowflake];return seasons.map((season,k)=>{const Icon=icons[k];return <div className={'season-particles particles-'+season} key={season}>{Array.from({length:28},(_,i)=><span key={i} style={{'--x':`${(7+i*37)%100}%`,'--delay':`${-i*3.7}s`,'--duration':`${12+(i%6)*4}s`,'--size':`${4+(i%5)*3}px`,'--drift':`${i%2?35:-45}px`} as CSSProperties}><Icon strokeWidth={1.2}/></span>)}</div>});},[]);
+ const particles=useMemo(()=>{const icons=[Flower2,Sparkles,Leaf,Snowflake];return seasons.map((season,k)=>{const Icon=icons[k];return <div className={'season-particles particles-'+season} key={season}>{Array.from({length:18},(_,i)=><span key={i} style={{'--x':`${(7+i*37)%100}%`,'--delay':`${-i*3.7}s`,'--duration':`${12+(i%6)*4}s`,'--size':`${4+(i%5)*3}px`,'--drift':`${i%2?35:-45}px`} as CSSProperties}><Icon strokeWidth={1.2}/></span>)}</div>});},[]);
  return <><div className="ambience" data-season={scene?.season} aria-hidden="true">{['morning','day','evening','night'].map((name,i)=><div key={name} className={'light-layer light-'+name} style={{opacity:scene?.lights[i]??(i===1?1:0)}}/>)}{particles}</div><div className="scene-label">{scene&&(scene.night>.5?<Moon size={15}/>:scene.period==='傍晚'?<Sunset size={15}/>:['清晨','早上'].includes(scene.period)?<Sunrise size={15}/>:<Sun size={15}/>)}<span>{scene?`${scene.seasonName} · ${scene.period}`:'夏彦与你'}</span><time>{scene?.time}</time></div></>;
 });
 
-// Two permanent image nodes; rapid clicks queue behind the current fade.
+// Two permanent image nodes. A newer request aborts the current fade instead of waiting in a queue.
 export function SeasonPhoto({season,className="",src}:{season:typeof seasons[number];className?:string;src?:string}){
  const photo=src??seasonPhotos[season];
  const initialPhoto=useRef(photo);
- const first=useRef<HTMLImageElement>(null),second=useRef<HTMLImageElement>(null),initial=useRef(season),shown=useRef(photo),front=useRef(0),queue=useRef(Promise.resolve());
- useEffect(()=>{let cancelled=false;queue.current=queue.current.catch(()=>{}).then(async()=>{
-  if(cancelled||shown.current===photo||!first.current||!second.current)return;
-  const nodes=[first.current,second.current],position='center '+({spring:'40%',summer:'32%',autumn:'32%',winter:'40%'})[season];
-  const changed=await swapPhoto(nodes[front.current],nodes[1-front.current],photo,position,()=>cancelled);
-  if(changed){front.current=1-front.current;shown.current=photo;}
- }).catch(()=>{});return()=>{cancelled=true;};},[season,photo]);
+ const first=useRef<HTMLImageElement>(null),second=useRef<HTMLImageElement>(null),initial=useRef(season),shown=useRef(photo),front=useRef(0),active=useRef<AbortController|null>(null);
+ useEffect(()=>{
+  active.current?.abort();
+  const controller=new AbortController();active.current=controller;
+  void (async()=>{
+   if(shown.current===photo||!first.current||!second.current)return;
+   const nodes=[first.current,second.current],position='center '+({spring:'40%',summer:'32%',autumn:'32%',winter:'40%'})[season];
+   try{const changed=await swapPhoto(nodes[front.current],nodes[1-front.current],photo,position,controller.signal);if(changed&&!controller.signal.aborted){front.current=1-front.current;shown.current=photo;}}catch{/* Keep the currently visible photograph if loading fails. */}
+  })();
+  return()=>controller.abort();
+ },[season,photo]);
  const position='center '+({spring:'40%',summer:'32%',autumn:'32%',winter:'40%'})[initial.current];
  return <div className={"season-photo "+className}><img ref={first} src={initialPhoto.current} alt="四季中的夏彦" style={{objectPosition:position}}/><img ref={second} alt="" style={{opacity:0,objectPosition:position}}/></div>;
 }
-
-
-
-
