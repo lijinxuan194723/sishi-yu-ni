@@ -8,3 +8,14 @@
 .app-shell:has(.main-nav button:nth-child(5)[data-active]) header:has(button[aria-label="搜索笔记"]) {
   display: none !important;
 }
+
+/* Global settings belongs to the home page only.
+   Other pages keep only actions that are specific to that page. */
+.app-shell:has(.main-nav button:nth-child(n+3)[data-active]) main > .page-bar .bar-actions > button[aria-label="打开设置"] {
+  display: none !important;
+}
+
+/* Chat has its own header, so remove the duplicated global settings there too. */
+.app-shell[data-chat="true"] .chat-head .bar-actions > button[aria-label="打开设置"] {
+  display: none !important;
+}
