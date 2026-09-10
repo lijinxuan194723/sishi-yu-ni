@@ -77,6 +77,24 @@
   .startup-splash[data-leave="true"]{
     border-radius:0 0 26px 26px;
   }
+
+  /* The mobile bottom navigation is fixed, so give it its own delayed entrance.
+     It stays hidden while the curtain begins to move, then rises in gently after the page is visible. */
+  :root[data-startup-phase="cover"] .sidebar{
+    opacity:0!important;
+    transform:translate3d(0,26px,0)!important;
+    pointer-events:none!important;
+  }
+  :root[data-startup-phase="handoff"] .sidebar{
+    opacity:1!important;
+    transform:translate3d(0,0,0)!important;
+    pointer-events:none!important;
+    transition:opacity .52s ease .30s,transform .60s cubic-bezier(.22,.72,.24,1) .26s,background-color 2.4s ease,border-color 2.4s ease!important;
+  }
+  :root[data-startup-phase="done"] .sidebar{
+    opacity:1!important;
+    transform:none!important;
+  }
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -84,4 +102,6 @@
   :root[data-startup-phase="handoff"] .app-shell{opacity:1!important;transform:none!important;filter:none!important;transition:opacity .18s linear!important}
   .startup-splash{transition:opacity .18s linear!important}
   .startup-splash[data-leave="true"]{opacity:0!important;transform:none!important;border-radius:0;box-shadow:none;border-bottom:0}
+  :root[data-startup-phase="cover"] .sidebar{opacity:0!important;transform:none!important}
+  :root[data-startup-phase="handoff"] .sidebar{opacity:1!important;transform:none!important;transition:opacity .18s linear!important}
 }
