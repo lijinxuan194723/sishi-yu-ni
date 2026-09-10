@@ -105,10 +105,3 @@
   :root[data-startup-phase="cover"] .sidebar{opacity:0!important;transform:none!important}
   :root[data-startup-phase="handoff"] .sidebar{opacity:1!important;transform:none!important;transition:opacity .18s linear!important}
 }
-/* Final handoff override: avoid blur and layout-affecting animation during startup. */
-:root[data-startup-phase="cover"] .app-shell{opacity:.72!important;transform:translate3d(0,18px,0)!important;filter:none!important;will-change:transform,opacity}
-:root[data-startup-phase="handoff"] .app-shell{opacity:1!important;transform:translate3d(0,0,0)!important;filter:none!important;transition:opacity .62s ease,transform .68s cubic-bezier(.22,.72,.24,1)!important}
-.startup-splash{filter:none!important;transform:translate3d(0,0,0)!important;will-change:transform;transition:transform .86s cubic-bezier(.22,.72,.24,1)!important}
-.startup-splash[data-leave="true"]{opacity:1!important;filter:none!important;transform:translate3d(0,-104%,0)!important;border-radius:0 0 20px 20px;box-shadow:0 18px 38px color-mix(in srgb,var(--season-accent) 22%,transparent)!important}
-.startup-splash[data-leave="true"] .startup-splash-core{opacity:.82!important;transform:translate3d(0,18px,0) scale(.99)!important;transition:opacity .68s ease,transform .86s cubic-bezier(.22,.72,.24,1)!important}
-@media(prefers-reduced-motion:reduce){:root[data-startup-phase="cover"] .app-shell{opacity:0!important;transform:none!important}:root[data-startup-phase="handoff"] .app-shell{opacity:1!important;transform:none!important;transition:opacity .18s linear!important}.startup-splash[data-leave="true"]{opacity:0!important;transform:none!important;box-shadow:none!important}}

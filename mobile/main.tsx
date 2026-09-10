@@ -4,4 +4,7 @@ import Page from '../app/page';
 import '../app/globals.css';
 import '../app/ambience.css';
 import '../app/notes-polish.css';
+import '../app/startup-splash.css';
+import '../app/startup-reveal.css';
+import '../app/startup-nav.css';
 createRoot(document.getElementById('root')!).render(<Page/>);

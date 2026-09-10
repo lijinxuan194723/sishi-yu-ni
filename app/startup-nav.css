@@ -27,6 +27,3 @@
   :root[data-startup-nav="hidden"] .sidebar{opacity:0!important;transform:none!important;visibility:hidden!important}
   :root[data-startup-nav="show"] .sidebar{opacity:1!important;transform:none!important;visibility:visible!important;transition:opacity .16s linear!important}
 }
-
-/* The navigation is part of the first frame; never animate it after startup. */
-@media(max-width:600px){.sidebar,:root[data-startup-nav] .sidebar{visibility:visible!important;opacity:1!important;transform:none!important;transition:none!important;pointer-events:auto!important}}
