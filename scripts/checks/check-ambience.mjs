@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {ambienceAt} from './lib/ambience.ts';
+import {ambienceAt} from '../../lib/ambience.ts';
 for(const [month,season] of [[0,'winter'],[2,'spring'],[5,'summer'],[8,'autumn'],[11,'winter']])assert.equal(ambienceAt(new Date(2026,month,1)).season,season);
 for(const [hour,period] of [[0,'深夜'],[5,'清晨'],[7,'早上'],[11,'正午'],[14,'午后'],[17,'傍晚'],[19,'夜晚'],[22,'深夜']])assert.equal(ambienceAt(new Date(2026,8,9,hour)).period,period);
 let previous;

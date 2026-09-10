@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {networkFetch,saveBackupFile} from './lib/mobile.ts';
-import {complete} from './lib/model.ts';
-import {fetchWeather} from './lib/weather.ts';
+import {networkFetch,saveBackupFile} from '../../lib/mobile.ts';
+import {complete} from '../../lib/model.ts';
+import {fetchWeather} from '../../lib/weather.ts';
 const calls=[];let canceled,backup;
 globalThis.window={LukeAndroid:{request(id,url,method,headers,body){calls.push({id,url,method,headers:JSON.parse(headers),body});if(url.includes('hang'))return;queueMicrotask(()=>window.__lukeNetwork(id,200,JSON.stringify(url.includes('open-meteo')?{current:{temperature_2m:22,weather_code:61,time:Math.floor(Date.now()/1000)}}:{choices:[{message:{content:'收到你的消息了。'}}]})));},cancel(id){canceled=id;},saveBackup(name,text){backup={name,text};}}};
 const config={baseUrl:'https://api.deepseek.com/v1',model:'deepseek-chat',key:'test-only'};
