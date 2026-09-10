@@ -1,26 +1,8 @@
 'use client';
 
-import {useState} from 'react';
-import {BookHeart, Star, Search, Pencil, ArrowUpRight, StickyNote} from 'lucide-react';
-import {moods, dateKey, type Data, type Mood} from '@/lib/companion';
 import {MemoBoard} from '@/components/memo-board';
+import type {Data} from '@/lib/companion';
 
-export function Journal({data,ready,save,today,text,setText,openMessage}:{data:Data;ready:boolean;save:(patch:Partial<Data>|((current:Data)=>Partial<Data>))=>void;today:string;text:string;setText:(text:string)=>void;openMessage:(index:number)=>void}){
- const [section,setSection]=useState<'journal'|'memos'>('journal');
- const [mood,setMood]=useState<Mood|undefined>(),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[editing,setEditing]=useState<Data['notes'][number]|null>(null),[editText,setEditText]=useState(''),[editMood,setEditMood]=useState<Mood|undefined>();
- const favorites=data.messages.map((m,i)=>({m,i})).filter(({m})=>m.favorite);
- const matches=(value:string)=>value.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
- const notes=data.notes.map((n,i)=>({n,i})).filter(({n})=>matches(n.text+' '+n.date+' '+(n.mood??'')));
- const savedMessages=favorites.filter(({m})=>matches(m.text+' '+(m.at?new Date(m.at).toLocaleDateString('zh-CN'):'')));
- return <div className="journal-space">
-  <section className="card journal-tools" aria-label="时光手记功能"><div className="journal-filters"><button aria-pressed={section==='journal'} onClick={()=>setSection('journal')}><BookHeart size={15}/> 手记</button><button aria-pressed={section==='memos'} onClick={()=>setSection('memos')}><StickyNote size={15}/> 备忘</button></div><small>{section==='journal'?'把发生过的事慢慢珍藏。':'把暂时不能忘的小事先放在这里。'}</small></section>
-  {section==='memos'?<MemoBoard/>:<>
-   <section className="card journal"><form onSubmit={e=>{e.preventDefault();if(!ready||!text.trim()&&!mood)return;save(current=>({notes:[{date:today,text:text.trim(),...(mood?{mood}:{})},...current.notes]}));setText('');setMood(undefined);}}><label htmlFor="note">今天，想珍藏什么？</label><div className="mood-choices" aria-label="今天的心情">{moods.map(item=><button type="button" key={item} aria-pressed={mood===item} disabled={!ready} onClick={()=>setMood(mood===item?undefined:item)}>{item}</button>)}</div><textarea id="note" maxLength={5000} placeholder="从一件小小的开心事开始……" value={text} onChange={e=>setText(e.target.value)}/><button className="primary" disabled={!ready||!text.trim()&&!mood}>收进回忆 <BookHeart size={17}/></button></form></section>
-   <section className="card mood-week"><h2>这一周的你</h2><div className="mood-days">{Array.from({length:7},(_,i)=>{const day=new Date(today+'T12:00:00');day.setDate(day.getDate()-6+i);const key=dateKey(day),entry=data.notes.find(n=>n.date===key&&n.mood);return <div key={key}><time dateTime={key}>{i===6?'今天':`${day.getMonth()+1}/${day.getDate()}`}</time><span title={entry?.mood??'还没有记录'}>{entry?.mood??'·'}</span></div>;})}</div><small>每一天，都是值得被认真对待的心情。</small></section>
-   <section className="card journal-tools"><div className="journal-filters" aria-label="回忆分类">{[['all','全部'],['notes','手记'],['favorites',`收藏 ${favorites.length}`]].map(([value,label])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}</div><label className="journal-search"><Search size={18}/><input aria-label="搜索手记与收藏" placeholder="找一句话、一个日期或一种心情…" value={query} maxLength={150} onChange={e=>setQuery(e.target.value)}/></label></section>
-   {filter!=='favorites'&&notes.map(({n,i})=><article className="card note" key={i}><div className="note-meta"><small>{n.date}{n.mood?' · '+n.mood:''}</small><button className="round" aria-label="编辑手记" disabled={!ready} onClick={()=>{setEditing(n);setEditText(n.text);setEditMood(n.mood);}}><Pencil size={17}/></button></div>{editing===n?<form className="note-edit" onSubmit={e=>{e.preventDefault();if(!ready||!editText.trim()&&!editMood)return;save(current=>({notes:current.notes.map(item=>item===editing?{...item,text:editText.trim(),mood:editMood}:item)}));setEditing(null);}}><div className="mood-choices">{moods.map(item=><button type="button" key={item} aria-pressed={editMood===item} onClick={()=>setEditMood(editMood===item?undefined:item)}>{item}</button>)}</div><textarea aria-label="编辑手记内容" maxLength={5000} value={editText} onChange={e=>setEditText(e.target.value)}/><div className="note-actions"><button type="button" className="soft-button" onClick={()=>setEditing(null)}>取消</button><button className="primary" disabled={!ready||!editText.trim()&&!editMood}>保存修改</button></div></form>:n.text?<p>{n.text}</p>:<p>记下了这一天的心情。</p>}</article>)}
-   {filter!=='notes'&&savedMessages.map(({m,i})=><article className="card note saved-message" key={'message-'+i}><div className="note-meta"><small><Star size={14}/> {m.who==='me'?data.name:'夏彦'}{m.at?' · '+new Date(m.at).toLocaleString('zh-CN',{hour12:false}):''}</small><button className="round" aria-label="取消收藏" disabled={!ready} onClick={()=>save(current=>({messages:current.messages.map((item,index)=>index===i?{...item,favorite:false}:item)}))}><Star size={17} fill="currentColor"/></button></div><p>{m.text}</p><button className="text-button" onClick={()=>openMessage(i)}>回到这句话 <ArrowUpRight size={15}/></button></article>)}
-   {!(filter!=='favorites'&&notes.length||filter!=='notes'&&savedMessages.length)&&<p className="empty">{query?'没有找到这段回忆。':'把今天的心情，或喜欢的一句话，留在这里。'}</p>}
-  </>}
- </div>;
+export function Journal({data}:{data:Data;ready:boolean;save:(patch:Partial<Data>|((current:Data)=>Partial<Data>))=>void;today:string;text:string;setText:(text:string)=>void;openMessage:(index:number)=>void}){
+ return <MemoBoard legacyNotes={data.notes}/>;
 }
