@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify motion crossfades
+        run: node --experimental-strip-types scripts/checks/check-photo-transition.mjs
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
