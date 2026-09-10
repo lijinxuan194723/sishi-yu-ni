@@ -1,6 +1,8 @@
-type NativeBridge={defaultModel?:()=>string;haptic?:()=>void;pageReady?:()=>void;systemTheme?:(color:string,dark:boolean)=>void;geocode?:(id:string,lat:number,lon:number)=>void;request:(id:string,url:string,method:string,headers:string,body:string)=>void;requestStream?:(id:string,url:string,method:string,headers:string,body:string)=>void;cancel:(id:string)=>void;saveBackup:(name:string,text:string)=>void};
+type NativeBridge={defaultModel?:()=>string;haptic?:()=>void;pageReady?:()=>void;systemTheme?:(color:string,dark:boolean)=>void;geocode?:(id:string,lat:number,lon:number)=>void;legacyAppInstalled?:()=>boolean;openLegacyApp?:()=>void;request:(id:string,url:string,method:string,headers:string,body:string)=>void;requestStream?:(id:string,url:string,method:string,headers:string,body:string)=>void;cancel:(id:string)=>void;saveBackup:(name:string,text:string)=>void};
 declare global {interface Window {LukeAndroid?:NativeBridge;__lukeBack?:()=>boolean;__lukeGeocode?:(id:string,place:string)=>void;__lukeNetwork?:(id:string,status:number,body:string)=>void;__lukeStreaming?:(id:string,status:number,type:string,chunk:string,done:boolean)=>void}}
 export function isAndroid(){return typeof window!=='undefined'&&!!window.LukeAndroid;}
+export function legacyAppInstalled(){try{return !!window.LukeAndroid?.legacyAppInstalled?.();}catch{return false;}}
+export function openLegacyApp(){try{window.LukeAndroid?.openLegacyApp?.();}catch{}}
 const pending=new Map<string,{resolve:(r:Response)=>void;reject:(e:Error)=>void;cleanup:()=>void}>();
 export function networkFetch(url:string,init:RequestInit={}):Promise<Response>{
  if(!isAndroid())return fetch(url,init);
