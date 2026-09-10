@@ -1,0 +1,29 @@
+/* Mobile bottom navigation enters in a separate startup stage.
+   The navigation is hard-hidden until JavaScript explicitly switches data-startup-nav to show. */
+@media(max-width:600px){
+  :root[data-startup-nav="hidden"] .sidebar{
+    opacity:0!important;
+    transform:translate3d(0,34px,0)!important;
+    pointer-events:none!important;
+    transition:none!important;
+    visibility:hidden!important;
+  }
+
+  :root[data-startup-nav="show"] .sidebar{
+    visibility:visible!important;
+    opacity:1!important;
+    transform:translate3d(0,0,0)!important;
+    pointer-events:none!important;
+    will-change:transform,opacity;
+    transition:opacity .46s ease,transform .56s cubic-bezier(.22,.72,.24,1),background-color 2.4s ease,border-color 2.4s ease!important;
+  }
+
+  :root[data-startup-phase="done"][data-startup-nav="show"] .sidebar{
+    pointer-events:auto!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) and (max-width:600px){
+  :root[data-startup-nav="hidden"] .sidebar{opacity:0!important;transform:none!important;visibility:hidden!important}
+  :root[data-startup-nav="show"] .sidebar{opacity:1!important;transform:none!important;visibility:visible!important;transition:opacity .16s linear!important}
+}
