@@ -1,364 +1,83 @@
 'use client';
 
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {BookHeart,CheckSquare2,ChevronLeft,ChevronRight,Copy,Download,Eye,Folder,FolderPlus,Heart,Pin,Plus,Search,Star,Trash2} from 'lucide-react';
 import {
-  ArrowLeft,
-  Check,
-  ChevronDown,
-  Clipboard,
-  Download,
-  Eye,
-  FileText,
-  Folder,
-  FolderPlus,
-  MoreHorizontal,
-  Pencil,
-  Pin,
-  Plus,
-  RotateCcw,
-  Search,
-  Star,
-  Trash2,
-} from 'lucide-react';
-import {
-  MEMO_STORAGE_KEY,
-  createMemo,
-  createMemoFolder,
-  emptyMemoWorkspace,
-  memoDisplayTitle,
-  memoExcerpt,
-  memoInCategory,
-  memoMatches,
-  parseMemoWorkspace,
-  sortMemos,
-  workspaceCounts,
-  type MemoCategory,
-  type MemoDocument,
-  type MemoWorkspace,
+ MEMO_STORAGE_KEY,createMemo,createMemoFolder,emptyMemoWorkspace,memoDisplayTitle,memoExcerpt,memoInCategory,memoMatches,memoMoods,parseMemoWorkspace,sortMemos,workspaceCounts,
+ type MemoCategory,type MemoDocument,type MemoMood,type MemoWorkspace,
 } from '@/lib/memos';
 import {saveBackupFile} from '@/lib/mobile';
 import styles from './memo-board.module.css';
 
-const updatedFormat = new Intl.DateTimeFormat('zh-CN', {
-  month: 'numeric',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
+type LegacyNote={date:string;text:string;mood?:string};
+const JOURNAL_MIGRATION_KEY='luke-journal-to-notes-v1';
+const dtf=new Intl.DateTimeFormat('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
 
-function categoryLabel(category: MemoCategory, workspace: MemoWorkspace) {
-  if (category === 'all') return '全部备忘';
-  if (category === 'starred') return '星标备忘';
-  if (category === 'trash') return '回收站';
-  return workspace.folders.find(folder => folder.id === category.slice(7))?.name ?? '全部备忘';
+function safeName(value:string){return value.replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,60)||'无标题笔记';}
+function dateLabel(time:number){const d=new Date(time),n=new Date();if(d.toDateString()===n.toDateString())return new Intl.DateTimeFormat('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false}).format(d);return `${d.getMonth()+1}月${d.getDate()}日`;}
+function noteMarkdown(note:MemoDocument){return `${note.title.trim()?`# ${note.title.trim()}\n\n`:''}${note.body}`.trimEnd();}
+
+function Preview({text}:{text:string}){
+ const lines=text.split(/\r?\n/),nodes:React.ReactNode[]=[];let code:string[]=[];let inCode=false;
+ lines.forEach((line,i)=>{const key=`${i}-${line.slice(0,8)}`;if(line.trim().startsWith('```')){if(inCode){nodes.push(<pre key={key}><code>{code.join('\n')}</code></pre>);code=[];}inCode=!inCode;return;}if(inCode){code.push(line);return;}if(/^###\s+/.test(line))nodes.push(<h3 key={key}>{line.replace(/^###\s+/,'')}</h3>);else if(/^##\s+/.test(line))nodes.push(<h2 key={key}>{line.replace(/^##\s+/,'')}</h2>);else if(/^#\s+/.test(line))nodes.push(<h1 key={key}>{line.replace(/^#\s+/,'')}</h1>);else if(/^>\s?/.test(line))nodes.push(<blockquote key={key}>{line.replace(/^>\s?/,'')}</blockquote>);else if(/^[-*+]\s+\[[ xX]\]\s+/.test(line)){const done=/^[-*+]\s+\[[xX]\]/.test(line);nodes.push(<p key={key} className={styles.checkLine}><CheckSquare2 size={15}/><span>{line.replace(/^[-*+]\s+\[[ xX]\]\s+/,'')}</span>{done&&<small>完成</small>}</p>);}else if(/^[-*+]\s+/.test(line))nodes.push(<p key={key}>• {line.replace(/^[-*+]\s+/,'')}</p>);else nodes.push(line?<p key={key}>{line}</p>:<br key={key}/>);});
+ if(code.length)nodes.push(<pre key="last-code"><code>{code.join('\n')}</code></pre>);
+ return <div className={styles.preview}>{nodes.length?nodes:<span className={styles.previewEmpty}>还没有写下内容。</span>}</div>;
 }
 
-function safeName(value: string) {
-  return value.replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 60) || '无标题备忘';
-}
+export function MemoBoard({legacyNotes=[]}:{legacyNotes?:LegacyNote[]}){
+ const [workspace,setWorkspace]=useState<MemoWorkspace>(()=>emptyMemoWorkspace()),[loaded,setLoaded]=useState(false),[status,setStatus]=useState('正在读取笔记…');
+ const [category,setCategory]=useState<MemoCategory>('all'),[query,setQuery]=useState(''),[activeId,setActiveId]=useState<string|null>(null);
+ const [notebooksOpen,setNotebooksOpen]=useState(false),[creatingFolder,setCreatingFolder]=useState(false),[folderDraft,setFolderDraft]=useState('');
+ const [moreOpen,setMoreOpen]=useState(false),[moveOpen,setMoveOpen]=useState(false),[moodOpen,setMoodOpen]=useState(false),[preview,setPreview]=useState(false);
+ const bodyRef=useRef<HTMLTextAreaElement>(null),blocked=useRef(false),rawBackup=useRef<string|null>(null);
 
-function markdownOf(memo: MemoDocument) {
-  const title = memo.title.trim();
-  return title ? `# ${title}\n\n${memo.body}`.trimEnd() : memo.body;
-}
+ useEffect(()=>{try{const raw=localStorage.getItem(MEMO_STORAGE_KEY);rawBackup.current=raw;let next=parseMemoWorkspace(raw);if(localStorage.getItem(JOURNAL_MIGRATION_KEY)!=='1'&&legacyNotes.length){const ids=new Set(next.memos.map(m=>m.id));const migrated=legacyNotes.map((n,i)=>{const id=`journal-${n.date}-${i}`;const time=Date.parse(n.date+'T12:00:00');const mood=memoMoods.includes(n.mood as MemoMood)?n.mood as MemoMood:undefined;return {id,title:'',body:n.text,createdAt:Number.isFinite(time)?time:Date.now(),updatedAt:Number.isFinite(time)?time:Date.now(),pinnedAt:null,folderId:null,starred:false,deletedAt:null,...(mood?{mood}:{})} satisfies MemoDocument;}).filter(m=>!ids.has(m.id));if(migrated.length)next={...next,memos:[...migrated,...next.memos]};localStorage.setItem(JOURNAL_MIGRATION_KEY,'1');}setWorkspace(next);setStatus('已保存在本机');}catch{blocked.current=true;setWorkspace(emptyMemoWorkspace());setStatus('原笔记数据无法读取，已暂停自动写入。');}finally{setLoaded(true);}},[]);
+ useEffect(()=>{if(!loaded||blocked.current)return;try{localStorage.setItem(MEMO_STORAGE_KEY,JSON.stringify(workspace));setStatus('已保存在本机');}catch{setStatus('保存失败，请先导出备份。');}},[workspace,loaded]);
+ useEffect(()=>{setMoreOpen(false);setMoveOpen(false);setMoodOpen(false);setPreview(false);},[activeId]);
 
-function InlinePreview({memo}: {memo: MemoDocument}) {
-  const source = memo.body;
-  const nodes: ReactNode[] = [];
-  let code: string[] = [];
-  let inCode = false;
-  source.split(/\r?\n/).forEach((line, index) => {
-    if (line.trim().startsWith('```')) {
-      if (inCode) { nodes.push(<pre key={`code-${index}`}><code>{code.join('\n')}</code></pre>); code = []; }
-      inCode = !inCode;
-      return;
-    }
-    if (inCode) { code.push(line); return; }
-    const key = `${index}-${line.slice(0, 10)}`;
-    if (/^###\s+/.test(line)) nodes.push(<h3 key={key}>{line.replace(/^###\s+/, '')}</h3>);
-    else if (/^##\s+/.test(line)) nodes.push(<h2 key={key}>{line.replace(/^##\s+/, '')}</h2>);
-    else if (/^#\s+/.test(line)) nodes.push(<h1 key={key}>{line.replace(/^#\s+/, '')}</h1>);
-    else if (/^>\s?/.test(line)) nodes.push(<blockquote key={key}>{line.replace(/^>\s?/, '')}</blockquote>);
-    else if (/^[-*+]\s+\[[ xX]\]\s+/.test(line)) {
-      const checked = /^[-*+]\s+\[[xX]\]/.test(line);
-      nodes.push(<p key={key} className={styles.checkline}><Check size={15}/><span>{line.replace(/^[-*+]\s+\[[ xX]\]\s+/, '')}</span>{checked&&<small>完成</small>}</p>);
-    } else if (/^[-*+]\s+/.test(line)) nodes.push(<p key={key}>• {line.replace(/^[-*+]\s+/, '')}</p>);
-    else if (line) nodes.push(<p key={key}>{line}</p>);
-    else nodes.push(<br key={key}/>);
-  });
-  if (code.length) nodes.push(<pre key="code-last"><code>{code.join('\n')}</code></pre>);
-  return <div className={styles.preview}>{nodes.length ? nodes : <p className={styles.previewEmpty}>这里还没有内容。</p>}</div>;
-}
+ const folders=useMemo(()=>new Map(workspace.folders.map(f=>[f.id,f.name])),[workspace.folders]);
+ const counts=useMemo(()=>workspaceCounts(workspace),[workspace]);
+ const visible=useMemo(()=>sortMemos(workspace.memos.filter(m=>memoInCategory(m,category)&&memoMatches(m,query,m.folderId?folders.get(m.folderId)??'':'')),category==='trash'),[workspace.memos,category,query,folders]);
+ const pinned=category==='trash'?[]:visible.filter(m=>m.pinnedAt!==null),others=category==='trash'?visible:visible.filter(m=>m.pinnedAt===null);
+ const active=workspace.memos.find(m=>m.id===activeId)??null;
+ const categoryLabel=category==='all'?'全部笔记':category==='starred'?'加星笔记':category==='trash'?'回收站':folders.get(category.slice(7))??'全部笔记';
 
-export function MemoBoard() {
-  const [workspace, setWorkspace] = useState<MemoWorkspace>(() => emptyMemoWorkspace());
-  const [loaded, setLoaded] = useState(false);
-  const [status, setStatus] = useState('正在读取备忘…');
-  const [category, setCategory] = useState<MemoCategory>('all');
-  const [query, setQuery] = useState('');
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
-  const titleRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const blocked = useRef(false);
-  const originalRaw = useRef<string | null>(null);
+ function allowWrite(){if(!blocked.current)return true;if(!window.confirm('原笔记数据异常。继续会用新的笔记数据覆盖它，建议先导出原始数据。仍要继续吗？'))return false;blocked.current=false;return true;}
+ function mutate(id:string,patch:Partial<MemoDocument>|((memo:MemoDocument)=>Partial<MemoDocument>),touch=true){if(!allowWrite())return;setWorkspace(current=>({...current,memos:current.memos.map(m=>m.id===id?{...m,...(typeof patch==='function'?patch(m):patch),...(touch?{updatedAt:Date.now()}:{} )}:m)}));}
+ function addNote(){if(!allowWrite())return;const folderId=category.startsWith('folder:')?category.slice(7):null,note=createMemo(Date.now(),folderId);setWorkspace(current=>({...current,memos:[note,...current.memos]}));setCategory(folderId?`folder:${folderId}`:'all');setQuery('');setActiveId(note.id);}
+ function addFolder(){if(!allowWrite())return;const name=folderDraft.trim();if(!name)return;const folder=createMemoFolder(name);setWorkspace(current=>({...current,folders:[...current.folders,folder]}));setFolderDraft('');setCreatingFolder(false);setCategory(`folder:${folder.id}`);setNotebooksOpen(false);}
+ function removeFolder(id:string){if(!allowWrite()||!window.confirm(`删除笔记本“${folders.get(id)??''}”？其中的笔记会保留在默认笔记本。`))return;setWorkspace(current=>({...current,folders:current.folders.filter(f=>f.id!==id),memos:current.memos.map(m=>m.folderId===id?{...m,folderId:null,updatedAt:Date.now()}:m)}));if(category===`folder:${id}`)setCategory('all');}
+ function trash(note:MemoDocument){mutate(note.id,{deletedAt:Date.now(),pinnedAt:null},false);setActiveId(null);}
+ function restore(note:MemoDocument){mutate(note.id,{deletedAt:null},false);}
+ function deleteForever(note:MemoDocument){if(!allowWrite()||!window.confirm(`永久删除“${memoDisplayTitle(note)}”？`))return;setWorkspace(current=>({...current,memos:current.memos.filter(m=>m.id!==note.id)}));setActiveId(null);}
+ function move(note:MemoDocument,folderId:string|null){mutate(note.id,{folderId});setMoveOpen(false);setMoreOpen(false);}
+ async function copy(note:MemoDocument){try{await navigator.clipboard.writeText(noteMarkdown(note));setStatus('已复制笔记内容');}catch{setStatus('复制失败，请检查剪贴板权限。');}setMoreOpen(false);}
+ function exportOne(note:MemoDocument){saveBackupFile(`${safeName(memoDisplayTitle(note))}.md`,noteMarkdown(note));setMoreOpen(false);}
+ function exportAll(){const raw=blocked.current&&rawBackup.current?rawBackup.current:JSON.stringify(workspace,null,2);saveBackupFile(`四时与你-全部笔记-${new Date().toISOString().slice(0,10)}.json`,raw);}
+ function selectCategory(next:MemoCategory){setCategory(next);setQuery('');setActiveId(null);setNotebooksOpen(false);}
+ function insert(before:string,after=''){if(!active||preview)return;const el=bodyRef.current,start=el?.selectionStart??active.body.length,end=el?.selectionEnd??start;const body=active.body.slice(0,start)+before+active.body.slice(start,end)+after+active.body.slice(end);mutate(active.id,{body});requestAnimationFrame(()=>{if(!bodyRef.current)return;const pos=end+before.length+after.length;bodyRef.current.focus();bodyRef.current.setSelectionRange(pos,pos);});}
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(MEMO_STORAGE_KEY);
-      originalRaw.current = raw;
-      const next = parseMemoWorkspace(raw);
-      setWorkspace(next);
-      setStatus('自动保存到本机');
-    } catch {
-      blocked.current = true;
-      setStatus('原备忘数据异常，已暂停写入');
-    } finally {
-      setLoaded(true);
-    }
-  }, []);
+ function NoteRow({note}:{note:MemoDocument}){return <div className={styles.noteRow}><button className={styles.noteSelect} onClick={()=>setActiveId(note.id)}><div className={styles.noteTitle}><strong>{memoDisplayTitle(note)}</strong><span>{note.pinnedAt&&<Pin size={13}/>} {note.starred&&<Star size={13} fill="currentColor"/>}</span></div><div className={styles.noteSummary}><time>{dateLabel(note.updatedAt)}</time><span>{memoExcerpt(note,74)||'空白笔记'}</span></div><div className={styles.noteMeta}>{note.folderId&&<span><Folder size={11}/>{folders.get(note.folderId)}</span>}{note.mood&&<span className={styles.moodBadge}><Heart size={11}/>{note.mood}</span>}</div></button>{category==='trash'&&<div className={styles.trashActions}><button onClick={()=>restore(note)}>恢复</button><button onClick={()=>deleteForever(note)}>删除</button></div>}</div>}
+ function NoteSection({title,items}:{title:string;items:MemoDocument[]}){if(!items.length)return null;return <section className={styles.noteSection}><div className={styles.sectionHead}><h3>{title}</h3><small>{items.length}</small></div><div className={styles.noteGroup}>{items.map(note=><NoteRow key={note.id} note={note}/>)}</div></section>}
 
-  useEffect(() => {
-    if (!loaded || blocked.current) return;
-    try {
-      localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(workspace));
-      setStatus('自动保存到本机');
-    } catch {
-      setStatus('保存失败，请先导出备份');
-    }
-  }, [workspace, loaded]);
+ if(!loaded)return <div className={styles.loading}>正在整理你的笔记…</div>;
 
-  useEffect(() => {
-    if (!activeId) return;
-    requestAnimationFrame(() => titleRef.current?.focus());
-  }, [activeId]);
+ return <div className={styles.shell}>
+  <button id="note" tabIndex={-1} aria-hidden="true" className={styles.bridgeNew} onFocus={addNote}/>
+  {!active&&<div className={styles.listView}>
+   <header className={styles.heroHead}><div><span>NOTES</span><h2>笔记</h2><p>{counts.all} 条笔记 · {status}</p></div><div className={styles.headActions}><button aria-label="搜索笔记" onClick={()=>document.getElementById('memo-search')?.focus()}><Search/></button><button aria-label="笔记本" onClick={()=>setNotebooksOpen(true)}><BookHeart/></button></div></header>
+   <div className={styles.chipRail}><button className={styles.notebookChip} onClick={()=>setNotebooksOpen(true)} aria-label="打开笔记本"><BookHeart size={18}/></button><button data-active={category==='all'} onClick={()=>selectCategory('all')}>全部笔记</button><button data-active={category==='starred'} onClick={()=>selectCategory('starred')}>加星</button>{workspace.folders.map(folder=><button key={folder.id} data-active={category===`folder:${folder.id}`} onClick={()=>selectCategory(`folder:${folder.id}`)}>{folder.name}</button>)}</div>
+   <label className={styles.searchBar}><Search size={17}/><input id="memo-search" value={query} maxLength={120} onChange={e=>setQuery(e.target.value)} placeholder={`搜索${categoryLabel}`}/>{query&&<button aria-label="清空搜索" onClick={()=>setQuery('')}>×</button>}</label>
+   <main className={styles.noteList}>{category==='trash'?<NoteSection title="回收站" items={others}/>:<><NoteSection title="置顶" items={pinned}/><NoteSection title={pinned.length?'其他笔记':'全部笔记'} items={others}/></>}{!visible.length&&<div className={styles.empty}><BookHeart size={28}/><strong>{query?'没有找到相关笔记':category==='trash'?'回收站是空的':'还没有笔记'}</strong><p>{query?'换个关键词试试。':'点右下角的 +，随手记下第一件事。'}</p></div>}</main>
+   <button className={styles.fab} aria-label="新建笔记" onClick={addNote}><Plus size={30}/></button>
+  </div>}
 
-  const folderNames = useMemo(() => new Map(workspace.folders.map(folder => [folder.id, folder.name])), [workspace.folders]);
-  const counts = useMemo(() => workspaceCounts(workspace), [workspace]);
-  const visible = useMemo(() => sortMemos(
-    workspace.memos.filter(memo => memoInCategory(memo, category) && memoMatches(memo, query, memo.folderId ? folderNames.get(memo.folderId) ?? '' : '')),
-    category === 'trash',
-  ), [workspace.memos, category, query, folderNames]);
-  const active = workspace.memos.find(memo => memo.id === activeId) ?? null;
+  {active&&<article className={styles.editorView}>
+   <header className={styles.editorHead}><button className={styles.back} aria-label="返回笔记列表" onClick={()=>setActiveId(null)}><ChevronLeft/></button><div className={styles.editorTitle}><input aria-label="笔记标题" maxLength={300} value={active.title} placeholder="标题" onChange={e=>mutate(active.id,{title:e.target.value})}/><small>{dtf.format(new Date(active.updatedAt))} · 自动保存</small></div><div className={styles.editorActions}><button data-on={!!active.pinnedAt} aria-label={active.pinnedAt?'取消置顶':'置顶'} onClick={()=>mutate(active.id,{pinnedAt:active.pinnedAt?null:Date.now()},false)}><Pin size={18}/></button><button data-on={active.starred} aria-label={active.starred?'取消加星':'加星'} onClick={()=>mutate(active.id,{starred:!active.starred},false)}><Star size={18} fill={active.starred?'currentColor':'none'}/></button><button data-on={preview} aria-label={preview?'编辑':'预览'} onClick={()=>setPreview(v=>!v)}><Eye size={18}/></button><div className={styles.moreWrap}><button aria-label="更多操作" onClick={()=>{setMoreOpen(v=>!v);setMoveOpen(false);}}>•••</button>{moreOpen&&<div className={styles.moreMenu}>{moveOpen?<><button className={styles.menuBack} onClick={()=>setMoveOpen(false)}><ChevronLeft size={15}/>移动到笔记本</button><button onClick={()=>move(active,null)}>默认笔记本</button>{workspace.folders.map(f=><button key={f.id} onClick={()=>move(active,f.id)}>{f.name}</button>)}</>:<><button onClick={()=>setMoveOpen(true)}><Folder size={15}/>移动到笔记本<ChevronRight size={14}/></button><button onClick={()=>copy(active)}><Copy size={15}/>复制文字</button><button onClick={()=>exportOne(active)}><Download size={15}/>导出 Markdown</button><div/><button className={styles.danger} onClick={()=>trash(active)}><Trash2 size={15}/>删除笔记</button></>}</div>}</div></div></header>
+   {preview?<Preview text={active.body}/>:<textarea ref={bodyRef} className={styles.bodyInput} aria-label="笔记正文" value={active.body} maxLength={100000} onChange={e=>mutate(active.id,{body:e.target.value})} placeholder="随手写点什么……"/>}
+   <div className={styles.editorBottom}>{moodOpen&&<div className={styles.moodPicker}><button data-active={!active.mood} onClick={()=>{mutate(active.id,{mood:undefined});setMoodOpen(false);}}>无</button>{memoMoods.map(mood=><button key={mood} data-active={active.mood===mood} onClick={()=>{mutate(active.id,{mood});setMoodOpen(false);}}>{mood}</button>)}</div>}<div className={styles.quickBar}><button className={styles.moodButton} data-on={!!active.mood} onClick={()=>setMoodOpen(v=>!v)}><Heart size={16}/>{active.mood??'心情'}</button><span/><button onClick={()=>insert('## ')}>H2</button><button onClick={()=>insert('- ')}>• 列表</button><button onClick={()=>insert('- [ ] ')}>☐ 待办</button><button onClick={()=>insert('**','**')}>B</button><button onClick={()=>insert('> ')}>引用</button></div></div>
+  </article>}
 
-  function allowWrite() {
-    if (!blocked.current) return true;
-    const ok = window.confirm('检测到旧备忘数据异常。继续会建立新的备忘工作区，建议先导出原始数据。仍然继续吗？');
-    if (!ok) return false;
-    blocked.current = false;
-    return true;
-  }
-
-  function updateMemo(id: string, patch: Partial<MemoDocument> | ((memo: MemoDocument) => Partial<MemoDocument>), touch = true) {
-    if (!allowWrite()) return;
-    setWorkspace(current => ({
-      ...current,
-      memos: current.memos.map(memo => memo.id === id ? {
-        ...memo,
-        ...(typeof patch === 'function' ? patch(memo) : patch),
-        ...(touch ? {updatedAt: Date.now()} : {}),
-      } : memo),
-    }));
-  }
-
-  function newMemo() {
-    if (!allowWrite()) return;
-    const folderId = category.startsWith('folder:') ? category.slice(7) : null;
-    const memo = createMemo(Date.now(), folderId);
-    setWorkspace(current => ({...current, memos: [memo, ...current.memos]}));
-    setCategory(folderId ? `folder:${folderId}` : 'all');
-    setQuery('');
-    setPreview(false);
-    setMoreOpen(false);
-    setActiveId(memo.id);
-  }
-
-  function closeEditor() {
-    setMoreOpen(false);
-    setPreview(false);
-    setActiveId(null);
-  }
-
-  function moveToTrash(memo: MemoDocument) {
-    updateMemo(memo.id, {deletedAt: Date.now(), pinnedAt: null}, false);
-    closeEditor();
-  }
-
-  function restoreMemo(memo: MemoDocument) {
-    updateMemo(memo.id, {deletedAt: null}, false);
-    setCategory('all');
-  }
-
-  function deleteForever(memo: MemoDocument) {
-    if (!allowWrite() || !window.confirm(`永久删除“${memoDisplayTitle(memo)}”？此操作无法撤销。`)) return;
-    setWorkspace(current => ({...current, memos: current.memos.filter(item => item.id !== memo.id)}));
-    if (activeId === memo.id) closeEditor();
-  }
-
-  function newFolder() {
-    if (!allowWrite()) return;
-    const name = window.prompt('新建分类名称')?.trim();
-    if (!name) return;
-    const folder = createMemoFolder(name);
-    setWorkspace(current => ({...current, folders: [...current.folders, folder]}));
-    setCategory(`folder:${folder.id}`);
-    setCategoryOpen(false);
-  }
-
-  function deleteFolder(id: string) {
-    if (!allowWrite()) return;
-    const name = folderNames.get(id) ?? '';
-    if (!window.confirm(`删除分类“${name}”？里面的备忘不会删除，会回到“全部备忘”。`)) return;
-    setWorkspace(current => ({
-      ...current,
-      folders: current.folders.filter(folder => folder.id !== id),
-      memos: current.memos.map(memo => memo.folderId === id ? {...memo, folderId: null, updatedAt: Date.now()} : memo),
-    }));
-    if (category === `folder:${id}`) setCategory('all');
-  }
-
-  function selectCategory(next: MemoCategory) {
-    setCategory(next);
-    setCategoryOpen(false);
-    setActiveId(null);
-    setQuery('');
-  }
-
-  async function copyMemo(memo: MemoDocument) {
-    try {
-      await navigator.clipboard.writeText(markdownOf(memo));
-      setStatus('已复制全文');
-    } catch {
-      setStatus('复制失败，请检查剪贴板权限');
-    }
-    setMoreOpen(false);
-  }
-
-  function exportMemo(memo: MemoDocument) {
-    saveBackupFile(`${safeName(memoDisplayTitle(memo))}.md`, markdownOf(memo));
-    setMoreOpen(false);
-  }
-
-  function exportAll() {
-    const raw = blocked.current && originalRaw.current ? originalRaw.current : JSON.stringify(workspace, null, 2);
-    saveBackupFile(`四时与你-备忘-${new Date().toISOString().slice(0, 10)}.json`, raw);
-    setMoreOpen(false);
-  }
-
-  function formatSelection(kind: 'title'|'bold'|'list'|'check'|'quote') {
-    const memo = active;
-    const area = bodyRef.current;
-    if (!memo || !area) return;
-    const start = area.selectionStart;
-    const end = area.selectionEnd;
-    const source = memo.body;
-    const before = source.slice(0, start);
-    const chosen = source.slice(start, end);
-    const after = source.slice(end);
-    let next = source;
-    let nextStart = start;
-    let nextEnd = end;
-    if (kind === 'bold') {
-      next = `${before}**${chosen || '文字'}**${after}`;
-      nextStart = start + 2;
-      nextEnd = nextStart + (chosen || '文字').length;
-    } else {
-      const prefix = kind === 'title' ? '# ' : kind === 'list' ? '- ' : kind === 'check' ? '- [ ] ' : '> ';
-      const lineStart = source.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
-      next = `${source.slice(0, lineStart)}${prefix}${source.slice(lineStart)}`;
-      nextStart = start + prefix.length;
-      nextEnd = end + prefix.length;
-    }
-    updateMemo(memo.id, {body: next});
-    requestAnimationFrame(() => {
-      area.focus();
-      area.setSelectionRange(nextStart, nextEnd);
-    });
-  }
-
-  const categoryRow = (value: MemoCategory, label: string, count: number, icon: ReactNode) => <button key={value} className={styles.categoryRow} data-active={category===value} onClick={()=>selectCategory(value)}>{icon}<span>{label}</span><small>{count}</small></button>;
-
-  return <section className={styles.shell} data-editor-open={!!active}>
-    <header className={styles.topbar}>
-      <div className={styles.categoryWrap}>
-        <button className={styles.categoryTrigger} aria-expanded={categoryOpen} onClick={()=>setCategoryOpen(value=>!value)}>
-          <span>{categoryLabel(category, workspace)}</span><ChevronDown size={16}/>
-        </button>
-        {categoryOpen&&<div className={styles.categoryMenu}>
-          {categoryRow('all','全部备忘',counts.all,<FileText size={17}/>)}
-          {categoryRow('starred','星标备忘',counts.starred,<Star size={17}/>)}
-          {workspace.folders.length>0&&<div className={styles.menuDivider}/>}          
-          {workspace.folders.map(folder=><div className={styles.folderRow} key={folder.id}>
-            <button data-active={category===`folder:${folder.id}`} onClick={()=>selectCategory(`folder:${folder.id}`)}><Folder size={17}/><span>{folder.name}</span><small>{counts.folders[folder.id]??0}</small></button>
-            <button className={styles.folderDelete} aria-label={`删除分类 ${folder.name}`} onClick={()=>deleteFolder(folder.id)}>×</button>
-          </div>)}
-          <button className={styles.newFolder} onClick={newFolder}><FolderPlus size={17}/><span>新建分类</span></button>
-          <div className={styles.menuDivider}/>
-          {categoryRow('trash','回收站',counts.trash,<Trash2 size={17}/>)}
-        </div>}
-      </div>
-      <label className={styles.search}><Search size={17}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="搜索备忘" aria-label="搜索备忘"/></label>
-      <button className={styles.newButton} onClick={newMemo}><Plus size={20}/><span>新建</span></button>
-    </header>
-
-    <div className={styles.workspace}>
-      <aside className={styles.listPane} aria-label="备忘列表">
-        <div className={styles.listMeta}><span>{visible.length} 条</span><small>{status}</small></div>
-        <div className={styles.list}>
-          {visible.map(memo=><div className={styles.listItem} data-active={memo.id===activeId} key={memo.id}>
-            <button className={styles.listSelect} onClick={()=>{setActiveId(memo.id);setPreview(false);setMoreOpen(false);}}>
-              <div className={styles.listTitle}><strong>{memoDisplayTitle(memo)}</strong><span>{memo.pinnedAt&&<Pin size={13} fill="currentColor"/>}{memo.starred&&<Star size={13} fill="currentColor"/>}</span></div>
-              <p>{memoExcerpt(memo,72)||'空白备忘'}</p>
-              <small>{updatedFormat.format(new Date(memo.updatedAt))}{memo.folderId&&folderNames.get(memo.folderId)?` · ${folderNames.get(memo.folderId)}`:''}</small>
-            </button>
-            {category==='trash'&&<div className={styles.trashActions}><button onClick={()=>restoreMemo(memo)}><RotateCcw size={14}/>恢复</button><button onClick={()=>deleteForever(memo)}><Trash2 size={14}/>删除</button></div>}
-          </div>)}
-          {!visible.length&&<div className={styles.emptyList}><FileText size={28}/><strong>{query?'没有找到':'这里还没有备忘'}</strong><p>{query?'换个关键词试试。':'点右上角“新建”，马上记一件事。'}</p></div>}
-        </div>
-      </aside>
-
-      <main className={styles.editorPane}>
-        {active?<>
-          <div className={styles.editorHead}>
-            <button className={styles.back} aria-label="返回备忘列表" onClick={closeEditor}><ArrowLeft size={20}/></button>
-            <div className={styles.editorTitleWrap}>
-              <input ref={titleRef} className={styles.titleInput} maxLength={300} placeholder="标题" value={active.title} onChange={event=>updateMemo(active.id,{title:event.target.value})}/>
-              <small>{updatedFormat.format(new Date(active.updatedAt))}{active.folderId&&folderNames.get(active.folderId)?` · ${folderNames.get(active.folderId)}`:''}</small>
-            </div>
-            {active.deletedAt===null?<div className={styles.editorIcons}>
-              <button aria-label={active.pinnedAt?'取消置顶':'置顶'} data-on={!!active.pinnedAt} onClick={()=>updateMemo(active.id,{pinnedAt:active.pinnedAt?null:Date.now()},false)}><Pin size={18} fill={active.pinnedAt?'currentColor':'none'}/></button>
-              <button aria-label={active.starred?'取消星标':'星标'} data-on={active.starred} onClick={()=>updateMemo(active.id,{starred:!active.starred},false)}><Star size={18} fill={active.starred?'currentColor':'none'}/></button>
-              <button aria-label={preview?'编辑':'预览'} data-on={preview} onClick={()=>setPreview(value=>!value)}>{preview?<Pencil size={18}/>:<Eye size={18}/>}</button>
-              <div className={styles.moreWrap}>
-                <button aria-label="更多操作" aria-expanded={moreOpen} onClick={()=>setMoreOpen(value=>!value)}><MoreHorizontal size={20}/></button>
-                {moreOpen&&<div className={styles.moreMenu}>
-                  <label><Folder size={16}/><span>移动到</span><select value={active.folderId??''} onChange={event=>{updateMemo(active.id,{folderId:event.target.value||null});setMoreOpen(false);}}><option value="">无分类</option>{workspace.folders.map(folder=><option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label>
-                  <button onClick={()=>copyMemo(active)}><Clipboard size={16}/>复制全文</button>
-                  <button onClick={()=>exportMemo(active)}><Download size={16}/>导出 Markdown</button>
-                  <button onClick={exportAll}><Download size={16}/>导出全部备忘</button>
-                  <div className={styles.menuDivider}/>
-                  <button className={styles.deleteAction} onClick={()=>moveToTrash(active)}><Trash2 size={16}/>移到回收站</button>
-                </div>}
-              </div>
-            </div>:<div className={styles.editorIcons}><button onClick={()=>restoreMemo(active)} aria-label="恢复"><RotateCcw size={18}/></button><button onClick={()=>deleteForever(active)} aria-label="永久删除"><Trash2 size={18}/></button></div>}
-          </div>
-
-          {preview?<InlinePreview memo={active}/>:<>
-            <textarea ref={bodyRef} className={styles.bodyInput} maxLength={100000} value={active.body} placeholder="写点什么……" onChange={event=>updateMemo(active.id,{body:event.target.value})}/>
-            <div className={styles.formatBar} aria-label="快速格式">
-              <button onClick={()=>formatSelection('title')}>H1</button>
-              <button onClick={()=>formatSelection('bold')}><b>B</b></button>
-              <button onClick={()=>formatSelection('list')}>• 列表</button>
-              <button onClick={()=>formatSelection('check')}>☐ 待办</button>
-              <button onClick={()=>formatSelection('quote')}>“ 引用</button>
-            </div>
-          </>}
-          <footer className={styles.editorFoot}><span>{status}</span><span>{active.body.length} 字符</span></footer>
-        </>:<div className={styles.emptyEditor}><FileText size={35}/><strong>选一条备忘开始写</strong><p>内容会自动保存在本机。</p><button onClick={newMemo}><Plus size={17}/>新建备忘</button></div>}
-      </main>
-    </div>
-  </section>;
+  {notebooksOpen&&!active&&<div className={styles.notebookOverlay}><div className={styles.notebookSheet}><header><button aria-label="关闭笔记本" onClick={()=>setNotebooksOpen(false)}>×</button><h2>笔记本</h2><button onClick={()=>setCreatingFolder(true)}>新建</button></header><button className={styles.allNotebook} onClick={()=>selectCategory('all')}><BookHeart/><strong>全部笔记</strong><span>{counts.all}</span><ChevronRight/></button><div className={styles.notebookLabel}>我的笔记本</div><div className={styles.notebookGroup}>{workspace.folders.map(folder=><div className={styles.folderLine} key={folder.id}><button onClick={()=>selectCategory(`folder:${folder.id}`)}><Folder/><strong>{folder.name}</strong><span>{counts.folders[folder.id]??0}</span><ChevronRight/></button><button aria-label={`删除${folder.name}`} onClick={()=>removeFolder(folder.id)}>×</button></div>)}{!workspace.folders.length&&!creatingFolder&&<p className={styles.noFolders}>还没有自定义笔记本。</p>}{creatingFolder&&<form className={styles.newFolderForm} onSubmit={e=>{e.preventDefault();addFolder();}}><FolderPlus/><input autoFocus maxLength={30} value={folderDraft} onChange={e=>setFolderDraft(e.target.value)} placeholder="笔记本名称"/><button disabled={!folderDraft.trim()}>完成</button></form>}</div><div className={styles.notebookLabel}>其他</div><div className={styles.notebookGroup}><button className={styles.plainNotebook} onClick={()=>selectCategory('all')}><Folder/><strong>默认笔记本</strong><span>{workspace.memos.filter(m=>m.deletedAt===null&&m.folderId===null).length}</span><ChevronRight/></button><button className={styles.plainNotebook} onClick={()=>selectCategory('starred')}><Star/><strong>加星笔记</strong><span>{counts.starred}</span><ChevronRight/></button><button className={styles.plainNotebook} onClick={()=>selectCategory('trash')}><Trash2/><strong>回收站</strong><span>{counts.trash}</span><ChevronRight/></button></div><button className={styles.backupButton} onClick={exportAll}>导出全部笔记备份</button></div></div>}
+ </div>;
 }
