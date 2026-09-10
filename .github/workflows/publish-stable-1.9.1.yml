@@ -1,0 +1,57 @@
+name: Publish Android 1.9.1 Stable
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-stable-1.9.1.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: ef42398d38d2bbb7bb1f1584dea9ba3e243fe9ba
+
+      - name: Download verified 1.9.1 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/10149305245/zip" > "$RUNNER_TEMP/stable.zip"
+          mkdir -p "$RUNNER_TEMP/stable"
+          unzip -q "$RUNNER_TEMP/stable.zip" -d "$RUNNER_TEMP/stable"
+          test -f "$RUNNER_TEMP/stable/Four-Seasons-Luke-Memo-Preview.apk"
+          cp "$RUNNER_TEMP/stable/Four-Seasons-Luke-Memo-Preview.apk" "$RUNNER_TEMP/Four-Seasons-Luke-1.9.1.apk"
+
+      - name: Verify release APK digest
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/Four-Seasons-Luke-1.9.1.apk"
+          ACTUAL=$(sha256sum "$APK" | awk '{print $1}')
+          EXPECTED='b5ce5d2eaaa99b71ab737f61bc3c3c686d8c4dd39b414094f9e936e480897251'
+          echo "APK_SHA256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          printf '%s  %s\n' "$ACTUAL" 'Four-Seasons-Luke-1.9.1.apk' > "$RUNNER_TEMP/Four-Seasons-Luke-1.9.1.sha256"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create android-four-seasons-v1.9.1 \
+            "$RUNNER_TEMP/Four-Seasons-Luke-1.9.1.apk#Four-Seasons-Luke-1.9.1.apk" \
+            "$RUNNER_TEMP/Four-Seasons-Luke-1.9.1.sha256#Four-Seasons-Luke-1.9.1.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target ef42398d38d2bbb7bb1f1584dea9ba3e243fe9ba \
+            --title '四时与你 1.9.1（Android）' \
+            --notes-file docs/releases/android-1.9.1.md \
+            --latest
