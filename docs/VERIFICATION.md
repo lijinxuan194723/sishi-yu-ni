@@ -6,8 +6,8 @@
 - Local storage only, compatible with v1 backups; no D1/R2 binding. Keys are session-only and excluded from backups. Companion start date and day count are editable directly from the home counter.
 
 ## Executed checks
-- `node --experimental-strip-types check.mjs`: legacy backup validation and invalid records/dates passed.
-- `node --experimental-strip-types check-integrations.mjs`: persona/context injection, pinned/summary/original retrieval, summary checkpoints, failed API preservation, output truncation/empty response, cancellation, provider URL validation, weather mapping/staleness/precipitation boundary, day calculations and round trip passed.
+- `node --experimental-strip-types scripts/checks/check.mjs`: legacy backup validation and invalid records/dates passed.
+- `node --experimental-strip-types scripts/checks/check-integrations.mjs`: persona/context injection, pinned/summary/original retrieval, summary checkpoints, failed API preservation, output truncation/empty response, cancellation, provider URL validation, weather mapping/staleness/precipitation boundary, day calculations and round trip passed.
 - `npx tsc --noEmit`: passed.
 - `npm run build`: passed with home and two API routes.
 - Local HTTP root: 200. Live Open-Meteo through actual weather route: 200, normalized current weather returned for explicit test coordinates 39.9042,116.4074 (not the user's location).

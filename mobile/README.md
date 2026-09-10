@@ -1,5 +1,7 @@
 # 夏日来信 · 安卓版
 
+检查脚本统一归档在仓库根目录的 `scripts/checks/`，历史记录中的命令均从仓库根目录执行。
+
 安装包：`outputs/android/Summer-Luke-1.0.0.apk`。Android 8.0 及以上，使用系统 Android WebView；旧手机请先更新 Android System WebView。
 
 ## 安装和使用

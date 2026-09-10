@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.6（2026-09-10）
+- 新增：中文项目 README，加入项目介绍、使用方式、目录说明和角色/四季图片。
+- 修改：将说明文档移动到 `docs/`，将检查脚本移动到 `scripts/checks/`，同步更新文档中的命令路径。
+- 修复：减少根目录文件堆叠，改善 GitHub 首页的浏览和下载指引。
+
 ## v0.1（2026-09-09）
 - 提交：`3cc5864`
 - 说明：Build Luke companion website with local records and backups
