@@ -1,0 +1,135 @@
+/* Motion pass: keep motion continuous, short and compositor-friendly. */
+:root{
+  --motion-fast:180ms;
+  --motion-ui:260ms;
+  --motion-scene:420ms;
+  --motion-ease:cubic-bezier(.22,.72,.24,1);
+  --motion-ease-soft:cubic-bezier(.25,.72,.28,1);
+}
+
+/* Cross-fade controlled page/settings tab changes instead of replacing a panel in one frame. */
+@supports (view-transition-name:none){
+  ::view-transition-group(root){animation-duration:var(--motion-ui);animation-timing-function:var(--motion-ease)}
+  ::view-transition-old(root){animation:motion-view-out 180ms ease-out both}
+  ::view-transition-new(root){animation:motion-view-in 260ms var(--motion-ease) both}
+}
+@keyframes motion-view-out{from{opacity:1}to{opacity:0}}
+@keyframes motion-view-in{from{opacity:0}to{opacity:1}}
+
+/* Avoid multi-second repaints when season/night changes. */
+body{transition:background-color var(--motion-scene) var(--motion-ease-soft),color 320ms ease!important}
+.card,.sidebar,.chat-head,.composer,.chat-tools,.settings,input,textarea,select,.round,.soft-button,.primary,.page-bar .bar-actions>.round,.page-bar .bar-actions>.bar-today,.composer>textarea,.composer>.primary{
+  transition-property:background-color,border-color,color,opacity,transform!important;
+  transition-duration:var(--motion-ui)!important;
+  transition-timing-function:var(--motion-ease)!important;
+}
+button{transition:background-color var(--motion-fast) ease,color var(--motion-fast) ease,border-color var(--motion-fast) ease,transform var(--motion-fast) var(--motion-ease),opacity var(--motion-fast) ease!important}
+button:active:not(:disabled){transform:scale(.985)!important}
+.scene-label{transition:background-color var(--motion-scene) var(--motion-ease-soft),color var(--motion-scene) var(--motion-ease-soft),border-color var(--motion-scene) var(--motion-ease-soft)!important}
+.settings [data-slot=tabs-content]:not([hidden]){animation:none!important}
+
+/* Startup: one transform/opacity handoff. No full-screen blur, animated shadow or radius. */
+:root[data-startup-phase="cover"] .app-shell{
+  opacity:.18!important;
+  transform:translate3d(0,12px,0) scale(.996)!important;
+  filter:none!important;
+  pointer-events:none!important;
+  transform-origin:50% 42%;
+}
+:root[data-startup-phase="handoff"] .app-shell{
+  opacity:1!important;
+  transform:translate3d(0,0,0) scale(1)!important;
+  filter:none!important;
+  pointer-events:none!important;
+  transition:opacity 360ms ease-out,transform 440ms var(--motion-ease)!important;
+}
+:root[data-startup-phase="done"] .app-shell{opacity:1!important;transform:none!important;filter:none!important}
+.startup-splash{
+  opacity:1!important;
+  filter:none!important;
+  transform:translate3d(0,0,0)!important;
+  border-radius:0!important;
+  border:0!important;
+  box-shadow:none!important;
+  will-change:transform,opacity;
+  transition:transform 540ms var(--motion-ease),opacity 360ms ease-out!important;
+}
+.startup-splash[data-leave="true"]{
+  opacity:.985!important;
+  transform:translate3d(0,-101%,0)!important;
+  border-radius:0!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.startup-splash[data-leave="true"] .startup-splash-core{
+  opacity:.72!important;
+  transform:translate3d(0,8px,0) scale(.995)!important;
+  transition:opacity 300ms ease,transform 360ms var(--motion-ease)!important;
+}
+.startup-splash[data-leave="true"]:before{opacity:.55!important;transition:opacity 320ms ease!important}
+
+/* Mobile bottom nav never flips visibility in a single frame. */
+@media(max-width:600px){
+  :root[data-startup-nav="hidden"] .sidebar{
+    visibility:visible!important;
+    opacity:0!important;
+    transform:translate3d(0,14px,0)!important;
+    pointer-events:none!important;
+    transition:opacity 300ms ease,transform 360ms var(--motion-ease),background-color var(--motion-scene) var(--motion-ease-soft),border-color var(--motion-scene) var(--motion-ease-soft)!important;
+  }
+  :root[data-startup-nav="show"] .sidebar{
+    visibility:visible!important;
+    opacity:1!important;
+    transform:translate3d(0,0,0)!important;
+    pointer-events:none!important;
+    transition:opacity 300ms ease,transform 360ms var(--motion-ease),background-color var(--motion-scene) var(--motion-ease-soft),border-color var(--motion-scene) var(--motion-ease-soft)!important;
+  }
+  :root[data-startup-phase="done"][data-startup-nav="show"] .sidebar{pointer-events:auto!important}
+}
+
+/* Base UI surfaces: 100-150 ms felt like a pop. Keep exit and entrance symmetric. */
+[data-slot="dialog-overlay"],[data-slot="alert-dialog-overlay"],[data-slot="sheet-overlay"]{
+  animation-duration:220ms!important;
+  transition-duration:220ms!important;
+  animation-timing-function:ease!important;
+  transition-timing-function:ease!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+[data-slot="dialog-content"],[data-slot="alert-dialog-content"],[data-slot="sheet-content"],
+[data-slot="popover-content"],[data-slot="hover-card-content"],[data-slot="dropdown-menu-content"],
+[data-slot="context-menu-content"],[data-slot="select-content"],[data-slot="combobox-content"],
+[data-slot="menubar-content"]{
+  animation-duration:260ms!important;
+  transition-duration:260ms!important;
+  animation-timing-function:var(--motion-ease)!important;
+  transition-timing-function:var(--motion-ease)!important;
+  will-change:opacity,transform;
+}
+
+/* Custom study picker remains mounted during close so it can animate both ways. */
+.study-popover{
+  opacity:0;
+  transform:translate3d(0,6px,0) scale(.99);
+  pointer-events:none;
+  transition:opacity 220ms ease,transform 260ms var(--motion-ease)!important;
+  will-change:opacity,transform;
+}
+.study-popover[data-open="true"]{opacity:1;transform:translate3d(0,0,0) scale(1);pointer-events:auto}
+@starting-style{.study-popover[data-open="true"]{opacity:0;transform:translate3d(0,6px,0) scale(.99)}}
+
+/* Local content replacements use a light settle, never layout-position animation. */
+.reading-book{animation:local-settle 260ms var(--motion-ease) both}
+@keyframes local-settle{from{opacity:0;transform:translate3d(0,5px,0) scale(.996)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+
+/* Recovery notice is deliberately stable: no auto-dismiss and no destructive action. */
+.legacy-data-rescue{margin:0 0 18px;padding:14px 15px;border:1px solid color-mix(in srgb,var(--season-accent) 35%,var(--scene-border));border-radius:14px;background:color-mix(in srgb,var(--season-soft) 46%,var(--scene-paper));color:var(--scene-ink)}
+.legacy-data-rescue strong{display:block;margin-bottom:6px;font-size:14px}.legacy-data-rescue p{font-size:13px;line-height:1.75}.legacy-data-rescue .soft-button{margin:10px 0 7px}.legacy-data-rescue small{display:block;color:var(--scene-muted);line-height:1.65}
+
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-group(root),::view-transition-old(root),::view-transition-new(root){animation:none!important}
+  :root[data-startup-phase="cover"] .app-shell,:root[data-startup-phase="handoff"] .app-shell{transform:none!important;filter:none!important}
+  .startup-splash{transform:none!important;filter:none!important;transition:opacity 180ms linear!important}
+  .startup-splash[data-leave="true"]{opacity:0!important;transform:none!important}
+  .study-popover,.reading-book{animation:none!important;transition:none!important;transform:none!important}
+}
