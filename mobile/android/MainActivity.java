@@ -119,7 +119,7 @@ public class MainActivity extends Activity {
   private void perform(String id,String address,String method,String headers,String body,boolean streaming){
    if(id==null||id.length()>80||active.size()>=6)return;active.add(id);
    workers.execute(()->{HttpURLConnection c=null;try{
-    URL url=new URL(address);if(!"https".equals(url.getProtocol())||url.getUserInfo()!=null||url.getHost().isEmpty()||(!method.equals("GET")&&!method.equals("POST"))||body.length()>250000||headers.length()>12000)throw new IOException();
+    URL url=new URL(address);if(!"https".equals(url.getProtocol())||url.getUserInfo()!=null||url.getHost().isEmpty()||(!method.equals("GET")&&!method.equals("POST"))||body.length()>600000||headers.length()>12000)throw new IOException();
     c=(HttpURLConnection)url.openConnection();requests.put(id,c);if(!active.contains(id))return;
     c.setInstanceFollowRedirects(false);c.setConnectTimeout(20000);c.setReadTimeout(80000);c.setRequestMethod(method);c.setRequestProperty("User-Agent","FourSeasonsLuke/1.4 (com.luke.summer)");c.setRequestProperty("Accept",streaming?"text/event-stream":"application/json");
     JSONObject h=new JSONObject(headers);for(Iterator<String> it=h.keys();it.hasNext();){String key=it.next();if(key.equalsIgnoreCase("authorization")||key.equalsIgnoreCase("content-type"))c.setRequestProperty(key,h.getString(key));}
