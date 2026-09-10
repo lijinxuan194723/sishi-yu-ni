@@ -37,6 +37,24 @@ Thumbs.db
 
 # local environment
 .env*
+.env.local
+.env.development
+.env.production
+.env.test
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.cer
+*.crt
+*.asc
+*.enc
+*.token
+*.secret
+*.password
+*.config.local
 
 # deployment and generated files
 .vercel
@@ -54,3 +72,8 @@ next-env.d.ts
 /mobile/build/
 /mobile/.idea/
 /mobile/.cxx/
+signing-password.txt
+*.keystore
+*.jks
+*.p12
+*.pfx
