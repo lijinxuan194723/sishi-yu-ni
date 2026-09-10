@@ -1,0 +1,87 @@
+/* A deliberately visible splash-to-home handoff.
+   The splash remains opaque and physically moves away, revealing the prepared home screen below. */
+:root[data-startup-phase="cover"] body,
+:root[data-startup-phase="handoff"] body{
+  overflow:hidden;
+}
+
+:root[data-startup-phase="cover"] .app-shell{
+  opacity:.56!important;
+  transform:translate3d(0,34px,0) scale(.986)!important;
+  filter:blur(5px)!important;
+  transform-origin:50% 38%;
+  pointer-events:none;
+  will-change:transform,opacity,filter;
+}
+
+:root[data-startup-phase="handoff"] .app-shell{
+  opacity:1!important;
+  transform:translate3d(0,0,0) scale(1)!important;
+  filter:blur(0)!important;
+  pointer-events:none;
+  transition:opacity .72s ease,transform .82s cubic-bezier(.22,.72,.24,1),filter .62s ease!important;
+}
+
+:root[data-startup-phase="done"] .app-shell{
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+}
+
+/* Override the previous fade. This is now a curtain/reveal motion. */
+.startup-splash{
+  opacity:1!important;
+  filter:none!important;
+  transform:translate3d(0,0,0)!important;
+  transform-origin:50% 0;
+  will-change:transform,border-radius,box-shadow;
+  box-shadow:0 0 0 transparent;
+  transition:transform .86s cubic-bezier(.72,.02,.24,1),border-radius .86s cubic-bezier(.72,.02,.24,1),box-shadow .86s ease!important;
+}
+
+.startup-splash[data-leave="true"]{
+  opacity:1!important;
+  filter:none!important;
+  transform:translate3d(0,-104%,0)!important;
+  border-radius:0 0 34px 34px;
+  box-shadow:0 28px 58px color-mix(in srgb,var(--season-accent) 36%,transparent);
+  pointer-events:none;
+}
+
+/* Keep the title visible for the first half of the reveal, then let it drift with the curtain. */
+.startup-splash[data-leave="true"] .startup-splash-core{
+  opacity:.82!important;
+  transform:translate3d(0,28px,0) scale(.99)!important;
+  transition:opacity .68s ease,transform .86s cubic-bezier(.72,.02,.24,1)!important;
+}
+
+.startup-splash[data-leave="true"]:before{
+  opacity:.72!important;
+  transition:opacity .86s ease!important;
+}
+
+/* Seasonal light at the moving lower edge makes the handoff easy to perceive. */
+.startup-splash[data-leave="true"]{
+  border-bottom:2px solid color-mix(in srgb,var(--season-accent) 62%,white 18%);
+}
+
+:root[data-night="true"] .startup-splash[data-leave="true"]{
+  box-shadow:0 30px 64px color-mix(in srgb,var(--season-accent) 48%,#000 35%);
+  border-bottom-color:color-mix(in srgb,var(--season-accent) 70%,white 20%);
+}
+
+@media(max-width:600px){
+  :root[data-startup-phase="cover"] .app-shell{
+    transform:translate3d(0,28px,0) scale(.982)!important;
+  }
+  .startup-splash[data-leave="true"]{
+    border-radius:0 0 26px 26px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  :root[data-startup-phase="cover"] .app-shell{opacity:.2!important;transform:none!important;filter:none!important}
+  :root[data-startup-phase="handoff"] .app-shell{opacity:1!important;transform:none!important;filter:none!important;transition:opacity .18s linear!important}
+  .startup-splash{transition:opacity .18s linear!important}
+  .startup-splash[data-leave="true"]{opacity:0!important;transform:none!important;border-radius:0;box-shadow:none;border-bottom:0}
+}
