@@ -1,3 +1,6 @@
+export const memoMoods=['开心','平静','疲惫','低落','期待'] as const;
+export type MemoMood=typeof memoMoods[number];
+
 export type MemoDocument = {
   id: string;
   title: string;
@@ -8,6 +11,7 @@ export type MemoDocument = {
   folderId: string | null;
   starred: boolean;
   deletedAt: number | null;
+  mood?: MemoMood;
 };
 
 export type MemoFolder = {
@@ -56,14 +60,14 @@ export function memoDisplayTitle(memo: Pick<MemoDocument, 'title' | 'body'>): st
     .split(/\r?\n/)
     .map(line => line.trim())
     .find(Boolean);
-  if (!first) return '无标题备忘';
+  if (!first) return '无标题笔记';
   return first
     .replace(/^#{1,6}\s+/, '')
     .replace(/^[-*+]\s+\[[ xX]\]\s+/, '')
     .replace(/^[-*+]\s+/, '')
     .replace(/^\d+[.)]\s+/, '')
     .replace(/^>\s*/, '')
-    .slice(0, 48) || '无标题备忘';
+    .slice(0, 48) || '无标题笔记';
 }
 
 export function memoExcerpt(memo: Pick<MemoDocument, 'body'>, max = 110): string {
@@ -80,7 +84,7 @@ export function memoExcerpt(memo: Pick<MemoDocument, 'body'>, max = 110): string
 export function memoMatches(memo: MemoDocument, query: string, folderName = ''): boolean {
   const q = query.trim().toLocaleLowerCase();
   if (!q) return true;
-  return `${memo.title}\n${memo.body}\n${folderName}`.toLocaleLowerCase().includes(q);
+  return `${memo.title}\n${memo.body}\n${memo.mood??''}\n${folderName}`.toLocaleLowerCase().includes(q);
 }
 
 export function memoInCategory(memo: MemoDocument, category: MemoCategory): boolean {
@@ -103,34 +107,35 @@ export function sortMemos(memos: MemoDocument[], trash = false): MemoDocument[] 
 export function parseMemoWorkspace(raw: string | null): MemoWorkspace {
   if (!raw) return emptyMemoWorkspace();
   const p: unknown = JSON.parse(raw);
-  if (!p || typeof p !== 'object' || Array.isArray(p)) throw new Error('备忘数据格式不正确');
+  if (!p || typeof p !== 'object' || Array.isArray(p)) throw new Error('笔记数据格式不正确');
   const value = p as Partial<MemoWorkspace>;
   if (value.version !== MEMO_WORKSPACE_VERSION || !Array.isArray(value.folders) || !Array.isArray(value.memos)) {
-    throw new Error('备忘数据版本不兼容');
+    throw new Error('笔记数据版本不兼容');
   }
-  if (value.folders.length > 100 || value.memos.length > 3000) throw new Error('备忘数据数量异常');
+  if (value.folders.length > 100 || value.memos.length > 3000) throw new Error('笔记数据数量异常');
   const string = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
   const validTime = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0 && Number(v) <= 8640000000000000;
   const folderIds = new Set<string>();
   const folders = value.folders.map(folder => {
-    if (!folder || typeof folder !== 'object') throw new Error('备忘分类格式不正确');
+    if (!folder || typeof folder !== 'object') throw new Error('笔记本格式不正确');
     const f = folder as MemoFolder;
     if (!string(f.id, 100) || !string(f.name, 30) || !f.name.trim() || !validTime(f.createdAt) || folderIds.has(f.id)) {
-      throw new Error('备忘分类格式不正确');
+      throw new Error('笔记本格式不正确');
     }
     folderIds.add(f.id);
     return {id: f.id, name: f.name.trim(), createdAt: f.createdAt};
   });
   const memoIds = new Set<string>();
   const memos = value.memos.map(memo => {
-    if (!memo || typeof memo !== 'object') throw new Error('备忘内容格式不正确');
+    if (!memo || typeof memo !== 'object') throw new Error('笔记内容格式不正确');
     const m = memo as MemoDocument;
     if (
       !string(m.id, 100) || memoIds.has(m.id) || !string(m.title, 300) || !string(m.body, 100000) ||
       !validTime(m.createdAt) || !validTime(m.updatedAt) || m.updatedAt < m.createdAt ||
       !(m.pinnedAt === null || validTime(m.pinnedAt)) || !(m.folderId === null || (string(m.folderId, 100) && folderIds.has(m.folderId))) ||
-      typeof m.starred !== 'boolean' || !(m.deletedAt === null || validTime(m.deletedAt))
-    ) throw new Error('备忘内容格式不正确');
+      typeof m.starred !== 'boolean' || !(m.deletedAt === null || validTime(m.deletedAt)) ||
+      !(m.mood===undefined||memoMoods.includes(m.mood))
+    ) throw new Error('笔记内容格式不正确');
     memoIds.add(m.id);
     return {
       id: m.id,
@@ -142,6 +147,7 @@ export function parseMemoWorkspace(raw: string | null): MemoWorkspace {
       folderId: m.folderId,
       starred: m.starred,
       deletedAt: m.deletedAt,
+      ...(m.mood?{mood:m.mood}:{}),
     };
   });
   return {version: MEMO_WORKSPACE_VERSION, folders, memos};
