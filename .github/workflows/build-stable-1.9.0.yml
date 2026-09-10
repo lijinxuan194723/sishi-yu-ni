@@ -130,25 +130,32 @@ jobs:
 
           OLD_CERT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$OLD" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)
           NEW_CERT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$NEW" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)
-          test -n "$OLD_CERT" && test "$OLD_CERT" = "$NEW_CERT"
 
           OLD_BADGING=$("$BUILD_TOOLS/aapt" dump badging "$OLD" | head -1)
           NEW_BADGING=$("$BUILD_TOOLS/aapt" dump badging "$NEW" | head -1)
-          OLD_PACKAGE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/.*name='\([^']*\)'.*/\1/p")
-          NEW_PACKAGE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/.*name='\([^']*\)'.*/\1/p")
-          OLD_CODE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
-          NEW_CODE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
+          OLD_PACKAGE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+          NEW_PACKAGE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+          OLD_CODE=$(printf '%s\n' "$OLD_BADGING" | sed -n "s/^package: name='[^']*' versionCode='\([0-9]*\)'.*/\1/p")
+          NEW_CODE=$(printf '%s\n' "$NEW_BADGING" | sed -n "s/^package: name='[^']*' versionCode='\([0-9]*\)'.*/\1/p")
 
-          test "$OLD_PACKAGE" = 'com.luke.summer.preview'
-          test "$NEW_PACKAGE" = "$OLD_PACKAGE"
-          test "$NEW_CODE" -gt "$OLD_CODE"
-          "$BUILD_TOOLS/aapt" dump badging "$NEW" | grep -q "application-label:'四时与你'"
-
-          echo "Upgrade continuity verified"
-          echo "package=$NEW_PACKAGE"
+          echo "oldPackage=$OLD_PACKAGE"
+          echo "newPackage=$NEW_PACKAGE"
           echo "oldVersionCode=$OLD_CODE"
           echo "newVersionCode=$NEW_CODE"
-          echo "signerSha256=$NEW_CERT"
+          echo "oldSignerSha256=$OLD_CERT"
+          echo "newSignerSha256=$NEW_CERT"
+
+          test -n "$OLD_CERT"
+          test -n "$NEW_CERT"
+          test "$OLD_CERT" = "$NEW_CERT"
+          test "$OLD_PACKAGE" = 'com.luke.summer.preview'
+          test "$NEW_PACKAGE" = "$OLD_PACKAGE"
+          test -n "$OLD_CODE"
+          test -n "$NEW_CODE"
+          test "$NEW_CODE" -gt "$OLD_CODE"
+          "$BUILD_TOOLS/aapt" dump badging "$NEW" | grep -Fq "application-label:'四时与你'"
+
+          echo "Upgrade continuity verified: same package, same signer, higher versionCode."
 
       - name: Upload stable APK
         uses: actions/upload-artifact@v4
