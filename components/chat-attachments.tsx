@@ -1,7 +1,7 @@
 'use client';
 
 import {useRef,useState} from 'react';
-import {FileText,Image as ImageIcon,Paperclip,X} from 'lucide-react';
+import {FileText,Paperclip,X} from 'lucide-react';
 import styles from './chat-attachments.module.css';
 
 export type ChatAttachment={id:string;name:string;kind:'image'|'text'|'file';size:number;mime:string;content:string;truncated?:boolean};
@@ -16,12 +16,12 @@ async function loadImage(file:File){
  try{
   await new Promise<void>((resolve,reject)=>{image.onload=()=>resolve();image.onerror=()=>reject(Error('图片无法读取。'));image.src=url;});
   const ratio=Math.min(1,900/Math.max(image.naturalWidth,image.naturalHeight));
-  let width=Math.max(1,Math.round(image.naturalWidth*ratio)),height=Math.max(1,Math.round(image.naturalHeight*ratio));
+  const width=Math.max(1,Math.round(image.naturalWidth*ratio)),height=Math.max(1,Math.round(image.naturalHeight*ratio));
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');if(!ctx)throw Error('图片处理失败。');
   for(const scale of [1,.82,.68])for(const quality of [.68,.56,.46]){
    canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
    ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
-   const data=canvas.toDataURL('image/jpeg',quality);if(data.length<=115000)return data;
+   const data=canvas.toDataURL('image/jpeg',quality);if(data.length<=105000)return data;
   }
   throw Error('图片压缩后仍然过大，请换一张尺寸更小的图片。');
  }finally{URL.revokeObjectURL(url);}
