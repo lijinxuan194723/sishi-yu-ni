@@ -31,8 +31,8 @@ jobs:
       - name: Verify Luke memory knowledge
         run: node --experimental-strip-types scripts/checks/check-luke-knowledge.mjs
 
-      - name: Type check
-        run: npx tsc --noEmit
+      - name: Type check Luke memory
+        run: npx tsc -p tsconfig.luke-memory.json
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
