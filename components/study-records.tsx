@@ -1,0 +1,10 @@
+'use client';
+import {useState} from 'react';
+import {dateKey,type Data} from '@/lib/companion';
+import {editStudyRecord,studyTime} from '@/lib/study';
+const localInput=(time:number)=>{const d=new Date(time);return dateKey(d)+'T'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+export function StudyRecords({data,save,from,to}:{data:Data;save:(p:Partial<Data>|((d:Data)=>Partial<Data>))=>void;from:string;to:string}){
+ const [record,setRecord]=useState<NonNullable<Data['focusLog']>[number]|null>(null),[subject,setSubject]=useState(''),[start,setStart]=useState(''),[end,setEnd]=useState(''),[error,setError]=useState('');
+ const logs=(data.focusLog??[]).filter(r=>{const day=dateKey(new Date(r.at));return day>=from&&day<=to;}).slice().reverse();
+ return <details className="study-records"><summary>查看与修改记录（{logs.length}）</summary>{logs.map((r,i)=><div key={i} className="record-row"><span>{r.group||'未分类'} · {studyTime(r.minutes)}<small>{new Date(r.at).toLocaleString('zh-CN',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></span><button className="soft-button" onClick={()=>{setRecord(r);setSubject(r.group||'未分类');setStart(localInput(Date.parse(r.at)));setEnd(localInput(Date.parse(r.at)+r.minutes*60000));setError('');}}>修改</button></div>)}{record&&<form className="settings-stack" onSubmit={e=>{e.preventDefault();try{const patch=editStudyRecord(data,record,subject,Date.parse(start),Date.parse(end));save(patch);setRecord(null);}catch(e){setError(e instanceof Error?e.message:'修改失败');}}}><label>科目<input required maxLength={30} value={subject} onChange={e=>setSubject(e.target.value)}/></label><label>开始时间<input required type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></label><label>结束时间<input required type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></label><small>修改后按实际日期重新统计，跨午夜会拆为两天。</small>{error&&<p role="alert">{error}</p>}<div className="reading-actions"><button type="button" className="soft-button" onClick={()=>setRecord(null)}>取消</button><button className="primary">保存记录</button></div></form>}</details>;
+}

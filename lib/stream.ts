@@ -1,0 +1,7 @@
+export async function readCompletionStream(response:Response,onText:(text:string)=>void){
+ if(!response.body)throw Error('服务没有返回回复内容。');
+ const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',event='',text='',finished=false;
+ function dispatch(){const value=event.trim();event='';if(!value)return;if(value==='[DONE]'){finished=true;return;}let p;try{p=JSON.parse(value);}catch{throw Error('模型返回的流式数据格式不正确。');}if(p.error)throw Error('模型服务在回复过程中返回错误。');const choice=p.choices?.[0];const delta=choice?.delta?.content;if(typeof delta==='string'){text+=delta;if(text.length>20000)throw Error('本次回复过长，已停止接收。');onText(text);}if(choice?.finish_reason==='length')throw Error('回复达到模型长度限制，已保留收到的内容。');if(choice?.finish_reason)finished=true;}
+ function line(value:string){value=value.replace(/\r$/,'');if(!value){dispatch();return;}if(value.startsWith('data:'))event+=value.slice(5).trimStart()+'\n';}
+ try{while(true){const part=await reader.read();buffer+=decoder.decode(part.value,{stream:!part.done});if(buffer.length>100000)throw Error('流式响应内容异常。');let end;while((end=buffer.indexOf('\n'))>=0){line(buffer.slice(0,end));buffer=buffer.slice(end+1);}if(part.done){if(buffer)line(buffer);dispatch();break;}if(finished)break;}if(!finished)throw Error('连接提前结束，已收到的内容已保留。');if(!text.trim())throw Error('模型未返回有效文本。');return text.trim();}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+}

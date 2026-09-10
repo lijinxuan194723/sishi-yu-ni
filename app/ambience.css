@@ -1,0 +1,296 @@
+:root{--season-ground:#faf2f2;--season-accent:#a45c70;--season-soft:#f5e3e8;--scene-paper:#fffaf8;--scene-ink:#55443f;--scene-muted:#88746c;--scene-border:#e8dbd5}
+:is(:root,.settings)[data-season=summer]{--season-ground:#f5f6e9;--season-accent:#63836a;--season-soft:#e7eddb}
+:is(:root,.settings)[data-season=autumn]{--season-ground:#faf1e5;--season-accent:#a76235;--season-soft:#f4e0c6}
+:is(:root,.settings)[data-season=winter]{--season-ground:#edf2f8;--season-accent:#657fa3;--season-soft:#e0e9f5}
+body{background-color:var(--season-ground);transition:background-color 2.4s ease,color 2.4s ease}
+.card,.sidebar,.chat-head,.composer,.chat-tools,.settings,input,textarea,select,.round,.soft-button,.primary{transition:background-color 2.4s ease,border-color 2.4s ease,color 2.4s ease,box-shadow .3s ease}
+.primary{background-color:var(--season-accent)}.soft-button,.main-nav button[data-active]{background-color:var(--season-soft);color:var(--season-accent)}
+.ambience{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none;border-radius:inherit;contain:paint}
+.light-layer{position:absolute;inset:0;transition:opacity 30s linear;pointer-events:none}
+.light-morning{background:linear-gradient(130deg,#ffe1c33d,transparent 55%),radial-gradient(ellipse at 85% 5%,#ffedb775,transparent 70%)}
+.light-day{background:radial-gradient(ellipse at 100% 0%,#fffbd433,transparent 65%)}
+.light-evening{background:linear-gradient(135deg,#d8939226,transparent 55%),radial-gradient(ellipse at 90% 20%,#ffa14f70,transparent 70%)}
+.light-night{background:linear-gradient(150deg,#0f224d80,#25325359 65%,#40376633),radial-gradient(circle at 84% 9%,#e6eeffc0 0 1px,transparent 2px),radial-gradient(circle at 72% 16%,#fff9dcb0 0 1px,transparent 2px),radial-gradient(circle at 92% 24%,#eef4ff90 0 1px,transparent 2px)}
+.scene-label{position:absolute;z-index:5;top:20px;left:24px;display:flex;align-items:center;gap:8px;background:#fffaf1d9;border:1px solid #ffffff70;color:#705848;padding:8px 13px;border-radius:30px;backdrop-filter:blur(10px);font-size:13px;font-variant-numeric:tabular-nums;transition:background-color 2.4s,color 2.4s}
+.scene-label time{margin-left:4px;opacity:.7}.hero-copy{padding-top:78px}.hero-copy>p{min-height:2lh;max-width:24em;line-height:1.85}
+.season-particles{position:absolute;inset:0;transition:opacity 3s ease;pointer-events:none}
+.season-particles span{position:absolute;left:var(--x);top:-30px;width:var(--size);height:var(--size);opacity:0;animation:season-drift var(--duration) linear var(--delay) infinite;animation-play-state:paused;will-change:transform,opacity}
+.season-particles svg{width:100%;height:100%}.particles-spring{color:#ecacc0}.particles-summer{color:#f9e9a0}.particles-autumn{color:#d98d43}.particles-winter{color:#edf6ff}
+.ambience[data-season=spring] .particles-spring span,.ambience[data-season=summer] .particles-summer span,.ambience[data-season=autumn] .particles-autumn span,.ambience[data-season=winter] .particles-winter span{animation-play-state:running}
+.particles-summer span{animation-name:summer-glimmer;top:72%}
+@keyframes season-drift{0%{transform:translate3d(0,-20px,0) rotate(0);opacity:0}12%{opacity:.5}50%{transform:translate3d(var(--drift),250px,0) rotate(100deg);opacity:.4}88%{opacity:.35}100%{transform:translate3d(0,600px,0) rotate(210deg);opacity:0}}
+@keyframes summer-glimmer{0%,100%{transform:translate3d(0,20px,0);opacity:0}25%{opacity:.3}50%{transform:translate3d(var(--drift),-100px,0);opacity:.55}75%{opacity:.2}}
+:is(:root,.settings)[data-night=true]{color-scheme:dark;--background:#192330;--foreground:#e9e1d8;--popover:#232d3c;--muted:#303c4d;--muted-foreground:#c1b6ae;--border:#3e4959;--scene-paper:#232d3c;--scene-ink:#e9e1d8;--scene-muted:#c1b6ae;--scene-border:#3e4959;--season-ground:#192330;--season-soft:#354252;--season-accent:#b39171}
+:root[data-night=true] body{color:var(--scene-ink)}
+:root[data-night=true] :is(.card,.sidebar,.chat-head,.composer,.chat-tools,.settings,.round,input,textarea,select){background-color:var(--scene-paper);color:var(--scene-ink);border-color:var(--scene-border)}
+:root[data-night=true] :is(.quote-card,.weather-card,.portrait-card){background-image:none}
+:root[data-night=true] .hero:after{background:linear-gradient(90deg,#212c3cf5,#212c3cbd 40%,transparent 72%)}
+:root[data-night=true] .hero-foot{background:#232d3cdd;color:#d0c1b1}
+:root[data-night=true] .hero-copy>p,:root[data-night=true] :is(.together span,.together small,.eyebrow,.breadcrumb,.tiny-label,.section-label,.person p,.activity p,.activity>span,.page-heading p,.page-footer,.help,.settings small,.chat-head small,.day-card p,.plan-summary p,.inner-card dt,.portrait-card p,.sync-status){color:var(--scene-muted)}
+:root[data-night=true] :is(.hero h1 em,.together strong,.text-button,.inner-card dd,.brand){color:#e0bb98}
+:root[data-night=true] .scene-label{background:#243044d9;color:#e7ddd0;border-color:#77839355}
+:root[data-night=true] .chat-head{background-image:linear-gradient(90deg,#232d3cf2,#232d3cc9),url('/images/luke-sunset.jpg')}
+:root[data-night=true] .messages{background-image:linear-gradient(#1d293bdc,#1d293be8),url('/images/luke-camera.jpg')}
+:root[data-night=true] .message p{background:#2c394beb;color:var(--scene-ink);border-color:#445267}
+:root[data-night=true] .message.mine p{background:#455265ed}
+:root[data-night=true] .message small{background:#243044cf;color:#cec4b9}
+:root[data-night=true] :is(.pill,.memory-stat,.chat-status,.soft-panel){background-color:#303d4f;color:#dcc4a9;border-color:#4b596c}
+:root[data-night=true] .main-nav button{color:#c1b6ae}
+:root[data-night=true] .main-nav button[data-active]{color:#f0dbc4}
+:root[data-night=true] .weather-advice{color:#ddc4aa!important}
+:root[data-night=true] .weather-card :is(p,small){color:#bfb8b1}
+:root[data-paused=true] .season-particles span{animation-play-state:paused!important}
+@media(max-width:600px){.hero-copy{padding-top:260px}.scene-label{left:15px;top:15px;font-size:12px;padding:7px 10px}.scene-label time{display:none}.hero>.signature{font-size:20px;right:15px;top:22px}.hero-copy>p{min-height:3.7em}.season-particles span:nth-child(n+7){display:none}:root[data-night=true] .hero:after{background:linear-gradient(0deg,#212c3c 4%,#212c3cf5 25%,#212c3c75 50%,transparent 76%)}}
+@media(prefers-reduced-motion:reduce){.season-particles{display:none}.light-layer,.card,.sidebar,.settings,.scene-label,body{transition:none!important}}
+
+body.chat-open{overflow:hidden;overscroll-behavior:none}
+.app-shell[data-chat=true],.app-shell[data-chat=true]>.app-tabs{height:100dvh;overflow:hidden}
+.app-shell[data-chat=true] main{height:100%;display:flex;flex-direction:column;padding-top:20px;padding-bottom:20px;overflow:hidden}
+.app-shell[data-chat=true] main>.topbar,.app-shell[data-chat=true] main>.sync-status{display:none}
+.chat-page:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;margin:0;overflow:hidden}
+.chat-page .chat{display:flex;flex-direction:column;flex:1;min-height:0;padding:0}
+.chat-page .messages{height:auto;min-height:0;flex:1;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y;overflow-anchor:none}
+.chat-page :is(.chat-head,.chat-tools,.composer,.chat-status,.retry-reply){flex-shrink:0}
+.chat-head>button+button{margin-left:0}.chat-page .composer textarea{resize:none;max-height:100px}
+.settings-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));height:auto!important;gap:6px;background:transparent!important}
+.settings-tabs button{min-width:0;min-height:42px;border-radius:10px!important;background:var(--season-soft);font-size:13px!important}
+.settings-tabs button[data-active]{background:var(--season-accent)!important;color:#fff!important}
+.settings [data-slot=tabs-content]:not([hidden]){animation:settings-enter .2s linear both}
+.appearance-preview{position:relative;height:180px;isolation:isolate;overflow:hidden;border-radius:15px;background:#52626e}
+.appearance-preview>img{width:100%;height:100%;object-fit:cover;object-position:65% 40%}
+.appearance-preview .light-layer{transition:opacity 1.2s linear}
+.appearance-options{border:0;padding:0;margin:0;min-width:0}.appearance-options legend{font-size:15px;margin-bottom:10px}
+.appearance-options>div{display:flex;flex-wrap:wrap;gap:8px}.appearance-options button{border:1px solid var(--border);border-radius:10px;padding:10px 15px;font-size:14px;background:var(--scene-paper);color:var(--scene-ink)}
+.appearance-options button[aria-pressed=true]{background:var(--season-accent);color:white;border-color:var(--season-accent)}
+button{transition:background-color .2s linear,color .2s linear,border-color .2s linear,transform .16s linear,box-shadow .2s linear}
+button:active:not(:disabled){transform:scale(.97)}input[type=checkbox]{transition:accent-color .2s linear}
+@keyframes settings-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.app-shell[data-chat=true] main{padding:8px 10px calc(76px + env(safe-area-inset-bottom));margin:0}.chat-page .chat{border-radius:17px}.chat-page .chat-head{padding:12px}.chat-page .messages{padding:16px 12px}.chat-page .chat-tools{padding:7px 12px}.chat-page .composer{padding:9px}.chat-page .composer textarea{min-height:46px;font-size:16px}.settings-tabs button{font-size:12px!important;padding:8px 3px!important}.appearance-options button{padding:10px 12px}.settings .appearance-preview .scene-label time{display:inline}}
+@media(prefers-reduced-motion:reduce){button,input,.settings [data-slot=tabs-content]{animation:none!important;transition:none!important}button:active:not(:disabled){transform:none}}
+.typing-dots{display:flex;align-items:center;gap:6px;min-height:44px}.typing-dots i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:typing-pulse 1.2s linear infinite;opacity:.25}.typing-dots i:nth-child(2){animation-delay:.2s}.typing-dots i:nth-child(3){animation-delay:.4s}.typing-caret{display:inline-block;width:2px;height:1em;background:currentColor;vertical-align:-.12em;margin-left:3px;animation:typing-pulse 1s linear infinite}.live-message p{min-width:55px}
+@keyframes typing-pulse{0%,100%{opacity:.2}50%{opacity:.8}}
+@media(prefers-reduced-motion:reduce){.typing-dots i,.typing-caret{animation:none;opacity:.6}}
+:root[data-manual=true] .light-layer{transition:opacity 1.2s linear}
+@media(prefers-reduced-motion:reduce){:root[data-manual=true] .light-layer{transition:none}}
+/* Seasonal photographs and complete palettes. */
+:is(:root,.settings)[data-season=spring]{--season-ground:#e0f1e9;--season-soft:#c9e7d8;--season-accent:#286a57;--scene-paper:#f3fcf7;--scene-ink:#244b40;--scene-muted:#607e72;--scene-border:#bddbcd;--season-photo:url('/images/seasons/spring.png');--photo-y:40%}
+:is(:root,.settings)[data-season=summer]{--season-ground:#dceefa;--season-soft:#bbe1ee;--season-accent:#187592;--scene-paper:#f2fbff;--scene-ink:#224858;--scene-muted:#527b90;--scene-border:#b7d9ea;--season-photo:url('/images/seasons/summer.png');--photo-y:32%}
+:is(:root,.settings)[data-season=autumn]{--season-ground:#f3dfbd;--season-soft:#edc893;--season-accent:#975027;--scene-paper:#fff5e5;--scene-ink:#624024;--scene-muted:#96704b;--scene-border:#dfbf91;--season-photo:url('/images/seasons/autumn.png');--photo-y:32%}
+:is(:root,.settings)[data-season=winter]{--season-ground:#e6e8f5;--season-soft:#d1d7ef;--season-accent:#636999;--scene-paper:#f8f9ff;--scene-ink:#3c4263;--scene-muted:#797f9c;--scene-border:#cbd0e8;--season-photo:url('/images/seasons/winter.png');--photo-y:40%}
+:is(:root,.settings)[data-night=true]{--scene-paper:#222d39;--scene-ink:#e5eaf0;--scene-muted:#b0bdca;--scene-border:#394654;--season-ground:#18222d;--season-soft:#303f4e;--season-accent:#526e82;--background:var(--season-ground);--foreground:var(--scene-ink);--popover:var(--scene-paper);--border:var(--scene-border);--muted-foreground:var(--scene-muted)}
+:is(:root,.settings)[data-night=true][data-season=spring]{--season-accent:#416f63}
+:is(:root,.settings)[data-night=true][data-season=autumn]{--season-accent:#80634d}
+:is(:root,.settings)[data-night=true][data-season=winter]{--season-accent:#656a8b}
+:root{--background:var(--season-ground);--foreground:var(--scene-ink);--popover:var(--scene-paper);--border:var(--scene-border);--primary:var(--season-accent)}
+body{color:var(--scene-ink);background:radial-gradient(ellipse at 0 0,var(--season-soft),transparent 65%),var(--season-ground)}
+:root :is(.card,.sidebar,.settings,.chat-head,.chat-tools,.composer,.round,input,textarea,select){background-color:var(--scene-paper);color:var(--scene-ink);border-color:var(--scene-border)}
+:root :is(.quote-card,.weather-card,.portrait-card){background-image:linear-gradient(130deg,var(--scene-paper),var(--season-soft))}
+:root :is(.eyebrow,.section-label,.page-heading p,.day-card p,.plan-summary p,.activity p,.activity>span,.person p,.settings small,.help,.connection-form .help,.weather-card p,.weather-card small,.hero-copy>p,.together span,.together small,.brand,.page-footer,.inner-card dt,.chat-head small){color:var(--scene-muted)}
+:root :is(.together strong,.hero h1 em,.text-button,.inner-card dd){color:var(--season-accent)}
+:root[data-night=true] :is(.together strong,.hero h1 em,.text-button,.inner-card dd){color:var(--scene-ink)}
+:root :is(.soft-button,.pill,.soft-panel,.memory-stat,.calendar-grid .today){background:var(--season-soft);color:var(--scene-ink);border-color:var(--scene-border)}
+:root .main-nav button[data-active],:root .calendar-grid .selected{background:var(--season-accent);color:white}
+:root .main-nav button:not([data-active]){color:var(--scene-muted)}
+:root .hero{background:var(--season-soft);border-color:var(--scene-border)}
+:root .hero:after{background:linear-gradient(90deg,var(--scene-paper),color-mix(in srgb,var(--scene-paper) 90%,transparent) 35%,transparent 76%)}
+:root .hero-foot{background:color-mix(in srgb,var(--scene-paper) 85%,transparent);color:var(--scene-muted)}
+.season-photo{position:relative;overflow:hidden;width:100%;height:100%}
+.season-photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center var(--photo-y);transition:none}
+.hero .season-photo{position:absolute;inset:0}
+.hero .season-photo>img{object-position:75% var(--photo-y)}
+.appearance-preview>.season-photo{position:absolute;inset:0}
+:root .chat-head{background-image:linear-gradient(90deg,var(--scene-paper),color-mix(in srgb,var(--scene-paper) 76%,transparent)),var(--season-photo);background-position:center,var(--photo-y);background-size:cover}
+:root .messages{background-image:linear-gradient(color-mix(in srgb,var(--scene-paper) 81%,transparent),color-mix(in srgb,var(--scene-paper) 90%,transparent)),var(--season-photo);background-position:center var(--photo-y);background-size:cover}
+:root .message p{background:color-mix(in srgb,var(--scene-paper) 95%,transparent);border-color:var(--scene-border);color:var(--scene-ink)}
+:root .message.mine p{background:color-mix(in srgb,var(--season-soft) 95%,transparent)}
+:root .message small{background:color-mix(in srgb,var(--scene-paper) 85%,transparent);color:var(--scene-muted)}
+:root .avatar{object-position:center var(--photo-y);border-color:var(--scene-paper);outline-color:var(--scene-border)}
+:root .portrait-card>img{object-position:center var(--photo-y)}
+.weather-place{font-size:15px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;flex:1;min-width:0}
+.weather-card .section-label{align-items:flex-start}.weather-card .section-label>svg{margin-top:5px}
+.message-time{font-size:inherit;padding:5px 4px;min-height:32px;font-variant-numeric:tabular-nums;text-underline-offset:3px}
+.message-time:focus-visible,.message-time:hover{text-decoration:underline}
+.page-actions{display:flex;justify-content:flex-end;padding:18px 0 0}.timestamp-dialog [data-slot=dialog-description]{font-size:18px;line-height:1.8;margin-top:20px}
+:root .season-particles span{display:block}
+.particles-winter span{border-radius:50%;background:#fff;box-shadow:0 0 7px #fff9;filter:drop-shadow(0 1px 2px #677ca566)}
+.particles-winter span svg{display:none}.particles-winter span:nth-child(3n){filter:blur(1.2px)}
+.particles-spring{color:#e5a7bc}.particles-autumn{color:#d69a25}
+.particles-summer span{color:#fff9bb;filter:drop-shadow(0 0 6px #ffe491)}
+@keyframes season-drift{0%{transform:translate3d(0,-30px,0) rotate(0);opacity:0}8%{opacity:.85}48%{transform:translate3d(var(--drift),280px,0) rotate(85deg);opacity:.65}90%{opacity:.75}100%{transform:translate3d(0,650px,0) rotate(190deg);opacity:0}}
+:root[data-effects=off] .app-tabs .season-particles{display:none}
+:root[data-effects=off] .weather-animation{animation:none;display:none}
+:root[data-paused=true] .weather-animation{animation-play-state:paused}
+@media(max-width:600px){:root .hero:after{background:linear-gradient(0deg,var(--scene-paper) 4%,color-mix(in srgb,var(--scene-paper) 97%,transparent) 24%,color-mix(in srgb,var(--scene-paper) 45%,transparent) 48%,transparent 76%)}.hero .season-photo>img{object-position:center var(--photo-y)}.page-actions{padding-top:10px}.season-particles span:nth-child(n+23){display:none}}
+@media(prefers-reduced-motion:reduce){.season-particles,.weather-animation{display:none!important}.season-photo>img{transition:none}}
+/* Interpolate the palette itself, including gradients which otherwise switch in a frame. */
+@property --season-ground{syntax:'<color>';inherits:true;initial-value:#e0f1e9}
+@property --season-soft{syntax:'<color>';inherits:true;initial-value:#c9e7d8}
+@property --season-accent{syntax:'<color>';inherits:true;initial-value:#286a57}
+@property --scene-paper{syntax:'<color>';inherits:true;initial-value:#f3fcf7}
+@property --scene-ink{syntax:'<color>';inherits:true;initial-value:#244b40}
+@property --scene-border{syntax:'<color>';inherits:true;initial-value:#bddbcd}
+:root{transition:--season-ground 1.4s linear,--season-soft 1.4s linear,--season-accent 1.4s linear,--scene-paper 1.4s linear,--scene-ink 1.4s linear,--scene-border 1.4s linear}
+.app-loading{min-height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:#214f4c;color:#ead2a0;font-size:23px;letter-spacing:5px}
+
+
+.dynamic-activity{animation:settings-enter .4s linear both;grid-template-columns:48px 1fr}.dynamic-activity .text-button{grid-column:2;padding-top:8px}
+.occasion-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0;border-bottom:1px dashed var(--scene-border)}
+.occasion-row:last-child{border-bottom:0;padding-bottom:0}.occasion-row small{display:block;font-size:11px;color:var(--scene-muted);margin-top:5px}.occasion-row strong{font-size:15px;color:var(--season-accent);white-space:nowrap}
+.anniversary-edit{padding:16px;border:1px solid var(--scene-border);border-radius:14px;display:grid;gap:12px}
+.search-page .chat-head h2{font-size:18px}
+.search-fields{padding:16px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--scene-border)}
+.search-fields>input{width:100%}.search-fields label{display:flex;align-items:center;gap:10px;font-size:13px}.search-fields label input{font-size:14px;padding:8px}.search-fields .text-button{padding:8px;margin:0}
+.search-results{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px;display:flex;flex-direction:column;gap:14px}
+.search-result{display:block;text-align:left;background:var(--scene-paper);border:1px solid var(--scene-border);padding:16px;border-radius:14px;flex-shrink:0}
+.search-result>time{display:block;font-size:12px;color:var(--scene-muted);margin-top:6px}.search-result>p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;margin:12px 0}.search-result>small{display:flex;gap:5px;align-items:center;color:var(--scene-muted)}
+.message[data-highlight=true] p{outline:2px solid var(--season-accent);outline-offset:3px}
+.message-time{white-space:normal;text-align:left;line-height:1.6}
+.birthday-screen{position:fixed!important;inset:0!important;transform:none!important;translate:none!important;max-width:none!important;width:100vw!important;height:100dvh!important;max-height:none!important;border:0!important;border-radius:0!important;background:radial-gradient(ellipse at 50% 25%,#3e7770,#173f41 70%)!important;color:#ffebc3!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px!important;overflow:hidden;gap:26px}
+.birthday-screen>*:not(.birthday-confetti){position:relative;z-index:1}
+.birthday-screen h2{font-family:'KaiTi',serif;font-size:clamp(26px,6vw,40px);line-height:1.6;letter-spacing:2px}
+.birthday-screen [data-slot=dialog-description]{font-size:16px;line-height:2.1;color:#f1dfbe;max-width:34em}.birthday-screen [data-slot=dialog-description] span{display:block;margin-top:16px}
+.birthday-screen .primary{background:#e4bd7c;color:#214f4c;min-height:48px}
+.birthday-screen [data-slot=dialog-close]{position:absolute!important;top:24px!important;right:24px!important}
+.birthday-cake{color:#eacb86;animation:birthday-breathe 3s ease-in-out infinite}
+.birthday-confetti{position:absolute;inset:0;pointer-events:none}.birthday-confetti i{position:absolute;top:-20px;width:7px;height:13px;border-radius:3px;animation:celebrate-fall linear infinite}
+@keyframes celebrate-fall{0%{transform:translate3d(0,-20px,0) rotate(0);opacity:0}10%{opacity:.85}100%{transform:translate3d(50px,110dvh,0) rotate(540deg);opacity:.2}}
+@keyframes birthday-breathe{50%{transform:scale(1.08);filter:drop-shadow(0 0 22px #eacb8655)}}
+:root[data-effects=off] .birthday-confetti{display:none}:root[data-effects=off] .birthday-cake{animation:none}
+@media(prefers-reduced-motion:reduce){:root{transition:none}.photo-enter,.dynamic-activity,.birthday-cake{animation:none!important}.birthday-confetti{display:none}}
+/* One compact contextual top bar; conversation keeps its own fixed header. */
+.page-bar{display:flex;align-items:center;gap:12px;min-height:76px;padding:12px 0;border-bottom:1px solid var(--scene-border);background:color-mix(in srgb,var(--scene-paper) 94%,transparent);backdrop-filter:blur(16px);color:var(--scene-ink);z-index:15}
+main>.page-bar{position:sticky;top:0;margin:0 0 20px;padding-inline:12px;border-radius:0 0 18px 18px}
+.bar-emblem{width:42px;height:42px;display:grid;place-items:center;background:var(--season-soft);color:var(--season-accent);border-radius:14px;flex-shrink:0}
+.bar-title{flex:1;min-width:0}.page-bar .bar-title h1{font:600 20px/1.4 'Segoe UI','Microsoft YaHei',sans-serif;letter-spacing:1px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.page-bar .bar-title :is(p,small){display:block;margin:3px 0 0;color:var(--scene-muted);font-size:12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.page-bar .round{width:42px;height:42px;min-width:42px;min-height:42px;background:transparent;border-color:transparent;color:var(--scene-ink)}
+.page-bar .round:hover{background:var(--season-soft)}.bar-today{padding:10px 12px;min-height:42px;border-radius:12px;background:var(--season-soft);font-size:13px}
+.chat-page .chat-head.page-bar{padding:12px 16px;min-height:76px;gap:10px;flex-shrink:0;backdrop-filter:none;border-radius:0}
+.chat-head.page-bar .avatar{width:44px;height:44px}.chat-head.page-bar>button{margin-left:0}.chat-head.page-bar .bar-title{margin-right:auto}
+@media(max-width:600px){main>.page-bar{margin:0 -6px 14px;padding:10px 6px;min-height:70px}.page-bar{gap:9px}.page-bar .bar-title h1{font-size:18px}.bar-actions{gap:2px}.bar-emblem{width:36px;height:36px;border-radius:12px}.chat-page .chat-head.page-bar{min-height:70px;padding:10px 12px}.chat-head.page-bar .avatar{width:40px;height:40px}.page-bar .bar-title :is(p,small){font-size:11px}}
+/* Full-width toolbar below the native status bar, with one shared alignment grid. */
+body{min-height:100dvh;background-repeat:no-repeat;background-attachment:fixed}
+main>.page-bar{border-radius:0;box-shadow:none;backdrop-filter:none;background:var(--scene-paper)}
+.page-bar .bar-emblem{background:none;width:28px;height:36px;border-radius:0;color:var(--season-accent)}
+.page-bar .bar-title h1{font-size:18px;font-weight:600;letter-spacing:.3px}
+.page-bar .bar-title :is(p,small){font-size:11px;line-height:1.4;margin-top:2px}
+.page-bar .round{width:44px;height:44px;min-width:44px;min-height:44px}
+.bar-actions{gap:0}.bar-today{min-height:40px;padding:8px 12px;background:transparent;color:var(--scene-ink)}
+:root .chat-head.page-bar{background:var(--scene-paper);border-bottom:1px solid var(--scene-border)}
+@media(max-width:600px){
+ .app-shell main{padding-inline:16px}
+ main>.page-bar{margin:0 -16px 16px;padding:8px 16px;min-height:64px;gap:10px;top:0}
+ .page-bar .bar-title h1{font-size:17px}.page-bar .bar-emblem svg{width:21px;height:21px}
+ .app-shell[data-chat=true] main{padding:0 0 calc(76px + env(safe-area-inset-bottom));margin:0}
+ .chat-page .chat{border-radius:0;border:0}
+ .chat-page .chat-head.page-bar{padding:8px 16px;min-height:64px;gap:10px}
+ .chat-head.page-bar .avatar{width:36px;height:36px;flex-shrink:0}
+ .chat-page .messages{padding-inline:16px}.chat-page .composer{padding:10px 12px}
+ .bar-title{overflow:hidden}.bar-actions{flex-shrink:0}
+}
+.birthday-screen[data-fullscreen]{overflow-y:auto;justify-content:flex-start;padding-top:64px!important;padding-bottom:40px!important}
+.birthday-screen[data-fullscreen]>.birthday-cake{margin-top:auto;flex-shrink:0}
+.birthday-screen[data-fullscreen]>.primary{margin-bottom:auto;flex-shrink:0}
+.birthday-screen[data-fullscreen]>.birthday-confetti{position:fixed}
+
+/* Avoid repainting a blurred live page behind the appearance controls. */
+[data-slot=dialog-overlay]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.season-photo>img{transition:none!important;will-change:opacity}
+.season-particles{opacity:0;visibility:hidden}.ambience[data-season=spring] .particles-spring,.ambience[data-season=summer] .particles-summer,.ambience[data-season=autumn] .particles-autumn,.ambience[data-season=winter] .particles-winter{opacity:1;visibility:visible}
+
+.settings[data-effects=off] .season-particles{display:none}.settings .light-layer{transition:opacity 1.2s linear}
+
+.settings[data-night=false]{color-scheme:light}
+
+/* Only the visible preview animates while settings are open. */
+.app-shell[data-settings=true]>.app-tabs .season-particles{display:none}
+.season-particles{display:none}.ambience[data-season=spring] .particles-spring,.ambience[data-season=summer] .particles-summer,.ambience[data-season=autumn] .particles-autumn,.ambience[data-season=winter] .particles-winter{display:block}
+
+/* Keep photo/light fades and press motion on the compositor. Animating inherited
+   text colors here invalidates the particle subtree on every animation frame. */
+.settings,.settings *{transition-property:opacity,transform!important}
+
+
+
+/* No entry animation: the first frame is already in the saved theme. */
+:root:not([data-started]),:root:not([data-started]) *, :root:not([data-started]) *::before,:root:not([data-started]) *::after{transition:none!important;animation:none!important}
+
+.music-moment{margin:22px 0;padding:20px;border:1px solid var(--scene-border);border-radius:16px;background:var(--scene-paper)}.music-moment .section-label{font-size:14px}.music-moment .section-label small{margin-left:auto;font-size:12px}.song-detail{display:grid;gap:7px;margin:16px 0 10px;overflow-wrap:anywhere}.song-detail strong{font-size:17px;line-height:1.6}.song-detail small,.music-moment>p{font-size:13px;color:var(--scene-muted)}.music-moment>button{margin-top:14px;gap:8px;display:inline-flex;align-items:center}
+
+/* Theme colors switch directly. Photo crossfades and press motion remain. */
+:root,body,.app-shell,.app-shell *{transition-property:opacity,transform!important}
+.app-shell .light-layer,.settings .light-layer{transition:none!important}
+/* Every page reserves the same two action cells; settings is always last. */
+.page-bar .bar-actions{display:grid;grid-template-columns:44px 44px;gap:0;flex-shrink:0}
+.page-bar .bar-actions>button{width:44px;height:44px;min-width:44px;min-height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.page-bar .bar-actions svg{width:20px;height:20px}
+/* Toolbar actions keep the same unframed hit areas in both palettes. */
+:root .page-bar .round{background:transparent;border-color:transparent;border-radius:10px;box-shadow:none;color:var(--scene-ink)}
+:root .page-bar .round:focus-visible{outline:2px solid var(--scene-muted);outline-offset:-5px}
+@media(hover:hover){:root .page-bar .round:hover{background:var(--season-soft)}}
+:root[data-night=true] .page-bar .bar-emblem{color:#bdcad4}
+:root[data-night=true] :is(.study-picker,.study-date-button){background:var(--scene-paper)}
+.study-popover{max-height:min(300px,45dvh);overflow-y:auto;overscroll-behavior:contain}
+.study-picker span,.study-popover span,.study-timer>small,.note p,.task span{min-width:0;overflow-wrap:anywhere}
+.study-total,.study-categories strong,.week-review strong,.message-time{font-variant-numeric:tabular-nums}
+.study-period .text-button{padding:10px 0;margin:0;min-height:44px;flex-shrink:0}
+.chat-page .chat{position:relative}
+.chat-page .composer textarea,.chat-page .composer>.primary{height:46px;min-height:46px;max-height:46px;box-sizing:border-box}
+.chat-page .composer textarea{padding:10px 12px;line-height:24px;resize:none;overflow-y:auto}
+.chat-page .composer textarea:focus{outline:none;box-shadow:none;border-color:var(--scene-border)}
+.quote-card{padding-right:48px}.quote-card p{overflow-wrap:anywhere}.quote-card small{line-height:1.6}.quote-next{position:absolute;right:8px;bottom:12px;width:44px;height:44px;display:grid;place-items:center;color:var(--season-accent)}
+.reading-moment{margin-top:22px;padding:20px;border:1px solid var(--scene-border);border-radius:16px;background:var(--scene-paper)}
+.reading-editor,.study-records{margin-top:18px;padding-top:14px;border-top:1px solid var(--scene-border)}
+.reading-editor label,.study-records label{display:grid;gap:6px;font-size:14px}
+.reading-editor input,.reading-editor textarea,.study-records input{width:100%;min-width:0;background:var(--scene-paper);color:var(--scene-ink)}
+.study-records summary{padding:10px 0;cursor:pointer;font-size:14px}
+.record-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--scene-border);font-size:14px}
+.record-row small{display:block;color:var(--scene-muted);margin-top:4px}.record-row .soft-button{margin:0;flex-shrink:0}
+.settings .sharing-choice{display:flex;flex-direction:row;align-items:center;gap:12px;min-height:40px}.sharing-choice input{width:18px;height:18px;accent-color:var(--season-accent)}
+.context-preview{padding:14px;background:var(--season-soft);border-radius:12px;overflow-wrap:anywhere}.context-preview p{font-size:13px;margin:8px 0}
+.backup-reminder{padding:12px;border:1px solid var(--scene-border);border-radius:12px}.backup-reminder p{font-size:13px}.backup-reminder .text-button{padding:8px 0;margin:0}
+.reading-book{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;margin:20px 0}.book-spine{display:grid;place-items:center;writing-mode:vertical-rl;letter-spacing:5px;border-radius:5px 10px 10px 5px;background:var(--season-soft);color:var(--scene-ink);border-left:4px solid var(--season-accent)}
+.reading-book h3{margin:0 0 5px;font-size:19px}.reading-book small{color:var(--scene-muted)}.reading-book p,.reading-thought{font-size:14px;line-height:1.85;margin-top:10px}.reading-thought{padding:14px;border-radius:12px;background:var(--season-soft)}
+.reading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.reading-actions .soft-button{margin:0 0 0 auto}.reading-moment details{margin-top:12px;font-size:12px;color:var(--scene-muted)}.reading-moment summary{padding:10px 0;cursor:pointer}.reading-moment details a{display:block;text-decoration:underline}
+.study-workspace{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:start}.study-workspace .journal-filters{display:flex;gap:4px;background:var(--season-soft);padding:4px;border-radius:14px;margin-top:16px}.study-workspace .journal-filters button{flex:1;border:0;border-radius:10px;min-height:40px;padding:8px}
+.study-timer .focus-clock{padding:16px 0;color:var(--scene-ink)}.study-total{padding:16px;background:var(--season-soft);border-radius:14px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}.study-categories>div{padding-bottom:14px;border-bottom:1px solid var(--scene-border)}
+.journal-space{display:grid;gap:16px}.journal-space>.card{margin:0}.journal form{gap:14px}.journal textarea{min-height:130px;line-height:1.85}.journal .primary{align-self:flex-end;min-height:44px}.note-meta{gap:12px}.note p{white-space:pre-wrap;line-height:1.9}.note-actions{display:flex;gap:10px;justify-content:flex-end}.note-actions .soft-button{margin-top:0}.journal-tools .journal-filters{display:flex;flex-wrap:wrap;gap:6px}.journal-search{min-width:0}.journal-search input{min-width:0;width:100%}
+@media(max-width:600px){.study-workspace{grid-template-columns:minmax(0,1fr);gap:14px}.study-workspace>.card,.journal-space>.card{padding:20px}.study-timer{gap:14px}.study-range{gap:6px}.study-range input{padding:10px 7px}.reading-moment{padding:16px}.quote-card p{font-size:20px;line-height:1.7}.journal-space .mood-choices{gap:6px}.journal-space .mood-choices button{padding:8px 10px;min-height:40px}}
+.chat-page .composer>.primary{width:46px;min-width:46px;padding:0;flex-shrink:0}
+/* Touch/click focus must not acquire keyboard-only rings (including dialog portals). */
+:root:not([data-keyboard-focus=true]) :is(button,a,input,textarea,select,summary,[tabindex],[role=button]):focus{outline:none!important;box-shadow:none!important;--tw-ring-shadow:0 0 #0000;--tw-ring-offset-shadow:0 0 #0000}
+:root:not([data-keyboard-focus=true]) :is(input,textarea,select):focus{border-color:var(--scene-border)!important}
+:root:not([data-keyboard-focus=true]) :is([data-slot=tabs-trigger],[data-slot=button]):focus{border-color:transparent!important}
+/* Small local motions only: never fade the page, toolbar, photo, or theme. */
+@media(prefers-reduced-motion:no-preference){
+ .page-bar .bar-actions button svg,.study-picker svg,.message-favorite svg{transition:transform 180ms ease-out}
+ .page-bar .bar-actions button:active svg{transform:scale(.88)}
+ .study-picker[aria-expanded=true] svg{transform:rotate(90deg)}
+ .message-favorite[aria-pressed=true] svg{animation:local-pop 220ms ease-out}
+ .mood-choices button[aria-pressed=true]{animation:local-pop 220ms ease-out}
+ .study-popover,.note-edit,.latest-message,.reading-moment details[open]>p{animation:local-settle 180ms ease-out}
+ .reading-book{animation:local-settle 220ms ease-out}
+ :is(.primary,.soft-button,.round,.journal-filters button,.mood-choices button):active:not(:disabled){transform:scale(.97)}
+}
+@keyframes local-settle{from{transform:translateY(4px)}to{transform:translateY(0)}}
+@keyframes local-pop{0%{transform:scale(1)}45%{transform:scale(1.12)}100%{transform:scale(1)}}
+/* Navigation stays still; six equal hit areas with a quiet selection marker. */
+:root .main-nav button,:root .main-nav button svg{transform:none!important;animation:none!important;transition:none!important}
+@media(max-width:600px){
+ :root .main-nav{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
+ :root .main-nav button{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:54px;padding:6px 0;gap:5px;line-height:15px;border-radius:0;background:transparent!important;box-shadow:none!important;filter:none!important;font-weight:400}
+ :root .main-nav button[data-active]{color:var(--scene-ink)}
+ :root .main-nav button::after{content:'';position:absolute;bottom:0;left:calc(50% - 8px);width:16px;height:2px;border-radius:2px;background:transparent}
+ :root .main-nav button[data-active]::after{background:var(--season-accent)}
+ :root .main-nav button[data-active] svg{stroke-width:2.3}
+}
+.latest-message{position:absolute;right:16px;bottom:80px;z-index:8;border:1px solid var(--scene-border);border-radius:22px;background:var(--scene-paper);color:var(--scene-ink);box-shadow:0 3px 12px #0002;padding:10px 16px;min-height:44px;font-size:13px}
+/* Soft edges without live blur or changing toolbar geometry. */
+@media(max-width:600px){
+ main>.page-bar{border-bottom-color:transparent}
+ main>.page-bar::after{content:'';position:absolute;inset:auto 0 -12px;height:12px;background:linear-gradient(var(--scene-paper),transparent);pointer-events:none}
+ :root .app-shell .sidebar{border-top-color:transparent;box-shadow:none}
+ .sidebar::before{content:'';position:absolute;inset:-12px 0 auto;height:12px;background:linear-gradient(transparent,var(--scene-paper));pointer-events:none}
+}
+
+@media(max-width:600px){:root[data-keyboard=true] .sidebar{display:none!important}:root[data-keyboard=true] .app-shell main{padding-bottom:8px!important}:root[data-keyboard=true] .app-shell[data-chat=true],:root[data-keyboard=true] .app-shell[data-chat=true]>.app-tabs{height:var(--keyboard-height,100dvh)}:root[data-keyboard=true] .app-shell[data-chat=true] main{padding-bottom:0!important}}

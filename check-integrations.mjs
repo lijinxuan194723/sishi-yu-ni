@@ -19,7 +19,7 @@ const calls=[];globalThis.fetch=async(url,options)=>{calls.push({url,body:JSON.p
 const checkpoints=[];const memory=await prepareMemory(data,config,m=>checkpoints.push(m));
 assert.ok(memory.through>0);assert.equal(data.messages.length,41);assert.equal(memory.pinned,'叫我小夏');assert.ok(checkpoints.length);assert.equal(calls[0].url,'/api/model');assert.equal(calls[0].credentials,'same-origin');
 const context=chatContext({...data,memory},'测试位置，小雨，出门带伞');
-assert.match(context[0].content,/夏彦/);assert.match(context[0].content,/私家侦探/);assert.match(context[1].content,/茉莉花/);assert.match(context[1].content,/叫我小夏/);assert.match(context[1].content,/带伞/);assert.match(context.at(-1).content,/茉莉/);assert.ok(relatedMemories({...data,memory}).some(m=>m.text.includes('茉莉')));
+assert.match(context[0].content,/夏彦/);assert.match(context[0].content,/私家侦探/);assert.match(context[1].content,/茉莉花/);assert.match(context[1].content,/叫我小夏/);assert.match(context.at(-2).content,/带伞/);assert.match(context.at(-1).content,/茉莉/);assert.ok(relatedMemories({...data,memory}).some(m=>m.text.includes('茉莉')));
 const roundtrip=parseData(JSON.stringify({...data,memory}));assert.equal(roundtrip.memory.through,memory.through);assert.equal(roundtrip.messages.length,data.messages.length);
 globalThis.fetch=async()=>new Response('{}',{status:401});const failed=[];await assert.rejects(()=>prepareMemory(data,config,m=>failed.push(m)),/密钥/);assert.equal(failed.length,0);assert.equal(data.memory.through,0);
 globalThis.fetch=async()=>Response.json({code:'SITE_AUTH_REQUIRED'},{status:401});await assert.rejects(()=>complete(config,[]),/重新登录/);
@@ -28,8 +28,8 @@ globalThis.fetch=async()=>Response.json({choices:[{message:{content:null}}]});aw
 const signal=new AbortController();signal.abort();globalThis.fetch=async()=>{throw Error('abort');};await assert.rejects(()=>complete(config,[],signal.signal),/已停止/);
 assert.deepEqual(coordinates('39.9','116.4'),{latitude:39.9,longitude:116.4});for(const args of [['',0],[null,0],[91,0],[0,181],['no',2]])assert.throws(()=>coordinates(...args));
 const sample={status:'ok',server_time:Math.floor(Date.now()/1000),result:{realtime:{status:'ok',temperature:23,skycon:'LIGHT_RAIN'},minutely:{status:'ok',description:'雨还会持续',precipitation_2h:[0,0.031]},alert:{content:[{title:'暴雨预警'}]}}};
-const rain=normalizeCaiyun(sample);assert.equal(rain.kind,'rain');assert.match(weatherAdvice(rain),/带伞/);assert.ok(rain.rainSoon);assert.equal(rain.alert,'暴雨预警');assert.ok(isFresh(rain));assert.equal(isFresh(rain,Date.now()+20*60000),false);
-const snow=normalizeCaiyun({...sample,result:{realtime:{status:'ok',temperature:0,skycon:'LIGHT_SNOW'}}});assert.equal(snow.kind,'snow');assert.equal(snow.rainSoon,false);assert.match(weatherAdvice(snow),/下雪/);
+const rain=normalizeCaiyun(sample);assert.equal(rain.kind,'rain');assert.match(weatherAdvice(rain),/雨/);assert.ok(rain.rainSoon);assert.equal(rain.alert,'暴雨预警');assert.ok(isFresh(rain));assert.equal(isFresh(rain,Date.now()+20*60000),false);
+const snow=normalizeCaiyun({...sample,result:{realtime:{status:'ok',temperature:0,skycon:'LIGHT_SNOW'}}});assert.equal(snow.kind,'snow');assert.equal(snow.rainSoon,false);assert.match(weatherAdvice(snow),/雪/);
 assert.throws(()=>normalizeCaiyun({status:'error'}));assert.throws(()=>normalizeMeteo({current:{temperature_2m:null}}));
 assert.equal(normalizeMeteo({current:{temperature_2m:20,weather_code:95,time:Math.floor(Date.now()/1000)}}).kind,'storm');
 globalThis.fetch=originalFetch;

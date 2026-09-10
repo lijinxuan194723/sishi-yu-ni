@@ -1,0 +1,7 @@
+'use client';
+import {contextLabels,type Data} from '@/lib/companion';
+import {currentState} from '@/lib/model';
+export function CurrentContext({data,weather,save}:{data:Data;weather:string;save:(p:Partial<Data>)=>void}){
+ const state=currentState(data,weather);
+ return <div className="settings-stack"><h3>他知道的近况</h3><p>每次发送前重新读取。关闭后不再自动附加该项；已经说过的聊天和固定记忆不会因此删除。</p>{Object.entries(contextLabels).map(([key,label])=><label className="sharing-choice" key={key}><input type="checkbox" checked={data.contextSharing?.[key as keyof typeof contextLabels]!==false} onChange={e=>save({contextSharing:{...data.contextSharing,[key]:e.target.checked}})}/>{label}</label>)}<div className="context-preview"><p>称呼：{state.name}</p>{state.reading!==undefined&&<p>阅读：{typeof state.reading==='string'?state.reading:`《${state.reading.title}》 · ${state.reading.author} · ${state.reading.progress||'未记录进度'}${state.reading.thought?' · '+state.reading.thought:''}`}</p>}{state.weather!==undefined&&<p>天气：{state.weather}</p>}{state.study&&<p>今日学习：{state.study.totalMinutes} 分钟{state.study.subjects.map(s=>` · ${s.subject} ${s.minutes} 分钟`)}{state.study.running?'（正在学 '+state.study.running.subject+'）':''}</p>}{state.todayPlans&&<p>今日计划：{state.todayPlans.map(p=>(p.done?'已完成 ':'待完成 ')+p.text).join('；')||'暂无'}</p>}{state.todayNotes&&<p>今日手记：{state.todayNotes.map(n=>(n.mood??'')+' '+n.text).join('；')||'暂无'} · {state.checkedInToday?'已打卡':'未打卡'}</p>}{state.since!==undefined&&<p>相识：{state.since} · 生日：{state.birthday||'未设置'}{state.anniversaries?.map(a=>` · ${a.title} ${a.date}`)}</p>}</div></div>;
+}
