@@ -34,7 +34,7 @@ function safeStorageValue(raw:string){
  catch{return raw;}
 }
 
-export function buildFullBackup():FullBackup{
+export function buildFullBackup(mainData?:Data):FullBackup{
  const storage:Record<string,string>={},excludedSensitiveKeys:string[]=[];
  for(let i=0;i<localStorage.length;i++){
   const key=localStorage.key(i);
@@ -44,13 +44,15 @@ export function buildFullBackup():FullBackup{
   if(raw===null)continue;
   storage[key]=safeStorageValue(raw);
  }
- // Always capture the live main state even if a future storage migration changes ordering.
- const main=localStorage.getItem(MAIN_STORAGE_KEY);
- if(main!==null)storage[MAIN_STORAGE_KEY]=safeStorageValue(main);
+ if(mainData)storage[MAIN_STORAGE_KEY]=JSON.stringify(mainData);
+ else{
+  const main=localStorage.getItem(MAIN_STORAGE_KEY);
+  if(main!==null)storage[MAIN_STORAGE_KEY]=safeStorageValue(main);
+ }
  return {format:FULL_BACKUP_FORMAT,version:FULL_BACKUP_VERSION,exportedAt:new Date().toISOString(),storage,excludedSensitiveKeys};
 }
 
-export function stringifyFullBackup(){return JSON.stringify(buildFullBackup(),null,2);}
+export function stringifyFullBackup(mainData?:Data){return JSON.stringify(buildFullBackup(mainData),null,2);}
 
 export function isFullBackup(value:unknown):value is FullBackup{
  if(!value||typeof value!=='object'||Array.isArray(value))return false;
@@ -84,7 +86,6 @@ export function fullBackupSummary(backup:FullBackup){
 }
 
 export function restoreFullBackup(backup:FullBackup){
- // Validation happens before mutation so a malformed file never partially replaces local data.
  const checked=parseFullBackup(JSON.stringify(backup));
  const currentKeys:string[]=[];
  for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('luke-')&&!sensitiveKey.test(key))currentKeys.push(key);}
