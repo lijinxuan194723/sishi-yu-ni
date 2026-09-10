@@ -45,15 +45,16 @@ button:active:not(:disabled){transform:scale(.985)!important}
 }
 :root[data-startup-phase="done"] .app-shell{opacity:1!important;transform:none!important;filter:none!important}
 .startup-splash{
-  opacity:1!important;
+  opacity:0!important;
   filter:none!important;
   transform:translate3d(0,0,0)!important;
   border-radius:0!important;
   border:0!important;
   box-shadow:none!important;
   will-change:transform,opacity;
-  transition:transform 540ms var(--motion-ease),opacity 360ms ease-out!important;
+  transition:transform 540ms var(--motion-ease),opacity 300ms ease-out!important;
 }
+.startup-splash[data-show="true"]{opacity:1!important}
 .startup-splash[data-leave="true"]{
   opacity:.985!important;
   transform:translate3d(0,-101%,0)!important;
