@@ -20,7 +20,7 @@
   display: none !important;
 }
 
-/* Keep page-specific actions on one visual right edge across all pages. */
+/* Keep every page-specific action on the same visual right edge. */
 .page-bar{
   position:relative;
 }
@@ -38,19 +38,110 @@
   width:42px;
   height:42px;
   flex:0 0 42px;
+  border-color:var(--scene-border);
+  background:color-mix(in srgb,var(--season-soft) 38%,var(--scene-paper));
+  color:var(--season-accent);
+}
+.page-bar .bar-actions>.bar-today{
+  min-width:58px;
+  height:42px;
+  padding:0 15px;
+  border:1px solid var(--scene-border);
+  border-radius:13px;
+  background:color-mix(in srgb,var(--season-soft) 38%,var(--scene-paper));
+  color:var(--season-accent);
+  font-size:13px;
 }
 
-/* Attachment button sits on the same baseline as the message box and send button. */
+/* Chat composer: text field first, then one compact action cluster on the right. */
 .composer{
   position:relative;
-  align-items:flex-end;
+  align-items:center;
+  gap:8px;
+  background:color-mix(in srgb,var(--scene-paper) 96%,var(--season-soft));
 }
 .composer>textarea{
-  min-height:44px;
+  order:1;
+  flex:1;
+  min-height:46px;
   max-height:132px;
+  border-color:var(--scene-border);
+  background:color-mix(in srgb,var(--scene-paper) 97%,var(--season-soft));
+  color:var(--scene-ink);
+}
+.composer>button[aria-label="添加图片或文件"]{
+  order:2;
+}
+.composer>.primary{
+  order:3;
+  width:46px;
+  height:46px;
+  min-width:46px;
+  flex:0 0 46px;
+  padding:0;
+  border-radius:14px;
+  background:var(--season-accent);
+  color:#fff;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--season-accent) 22%,transparent);
+}
+.composer>.primary svg{
+  width:20px;
+  height:20px;
+}
+
+/* Day/night and season are both retained in chat.  Night darkens the current
+   season instead of replacing it with one fixed photograph. */
+:root[data-night="true"] .chat-head{
+  background-image:
+    linear-gradient(90deg,color-mix(in srgb,var(--scene-paper) 97%,#0d1722),color-mix(in srgb,var(--scene-paper) 76%,transparent)),
+    var(--season-photo) !important;
+  background-position:center,var(--photo-y);
+  background-size:cover;
+}
+:root[data-night="true"] .messages{
+  background-image:
+    linear-gradient(color-mix(in srgb,var(--scene-paper) 84%,transparent),color-mix(in srgb,var(--scene-paper) 94%,transparent)),
+    var(--season-photo) !important;
+  background-position:center var(--photo-y);
+  background-size:cover;
+}
+:root[data-night="true"] .composer{
+  background:color-mix(in srgb,var(--scene-paper) 94%,var(--season-soft));
+}
+:root[data-night="true"] .composer>textarea{
+  background:color-mix(in srgb,var(--scene-paper) 92%,var(--season-soft));
+}
+:root[data-night="true"] .message p{
+  background:color-mix(in srgb,var(--scene-paper) 93%,transparent);
+  border-color:var(--scene-border);
+  color:var(--scene-ink);
+}
+:root[data-night="true"] .message.mine p{
+  background:color-mix(in srgb,var(--season-soft) 88%,var(--scene-paper));
+}
+
+/* Slightly distinct night accents keep spring/summer/autumn/winter recognizable. */
+:root[data-night="true"][data-season="spring"]{--season-accent:#5d8f80}
+:root[data-night="true"][data-season="summer"]{--season-accent:#4d8798}
+:root[data-night="true"][data-season="autumn"]{--season-accent:#9a7659}
+:root[data-night="true"][data-season="winter"]{--season-accent:#7f86b0}
+
+.page-bar .bar-actions>.round,
+.page-bar .bar-actions>.bar-today,
+.composer,
+.composer>textarea,
+.composer>.primary{
+  transition:background-color 1.6s ease,border-color 1.6s ease,color 1.6s ease,box-shadow .25s ease;
 }
 
 @media(max-width:600px){
   .page-bar .bar-actions{gap:7px;min-height:40px}
   .page-bar .bar-actions>.round,.chat-head .bar-actions>.round{width:40px;height:40px;flex-basis:40px}
+  .page-bar .bar-actions>.bar-today{height:40px;min-width:54px;padding-inline:13px}
+  .composer{gap:7px}
+  .composer>.primary{width:44px;height:44px;min-width:44px;flex-basis:44px;border-radius:13px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .page-bar .bar-actions>.round,.page-bar .bar-actions>.bar-today,.composer,.composer>textarea,.composer>.primary{transition:none!important}
 }
