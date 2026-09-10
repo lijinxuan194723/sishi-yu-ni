@@ -47,21 +47,22 @@ export function useStartup(ready:boolean){
    try{await photo?.decode();}catch{/* A missing photo must not block the app. */}
    await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
    if(cancelled)return;
-   window.LukeAndroid?.pageReady?.();
    requestAnimationFrame(()=>splash.dataset.show='true');
+   // Reveal the WebView only after the splash already occupies the screen.
+   window.LukeAndroid?.pageReady?.();
    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
    leaveTimer=window.setTimeout(()=>{
     if(cancelled)return;
     root.dataset.startupPhase='handoff';
     splash.dataset.leave='true';
-   },reduced?260:1120);
+   },reduced?300:1180);
    removeTimer=window.setTimeout(()=>{
     if(cancelled)return;
-    document.documentElement.dataset.started='true';
+    root.dataset.started='true';
     root.dataset.startupPhase='done';
     splash.remove();
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(root.dataset.startupPhase==='done')delete root.dataset.startupPhase;}));
-   },reduced?520:1880);
+   },reduced?560:2080);
   })();
   return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(removeTimer);splash.remove();delete root.dataset.startupPhase;};
  },[ready]);
