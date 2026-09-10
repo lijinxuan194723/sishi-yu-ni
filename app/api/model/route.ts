@@ -1,5 +1,20 @@
 import {userId,sameOrigin,json} from '@/lib/server';
 import {completionURL,proxiedHosts} from '@/lib/model';
-export async function POST(request:Request){try{userId(request);if(!sameOrigin(request))return json({error:'来源无效'},403);const raw=await request.text();if(raw.length>200000)return json({error:'内容过长'},413);let p;try{p=JSON.parse(raw);const url=new URL(completionURL(p.url));if(!proxiedHosts.includes(url.hostname)||url.port||!['/chat/completions','/v1/chat/completions','/api/v1/chat/completions'].includes(url.pathname))throw Error();if(typeof p.key!=='string'||p.key.length>4096||typeof p.model!=='string'||p.model.length>150||!Array.isArray(p.messages)||!p.messages.length||!p.messages.every((m:any)=>m&&['system','user','assistant'].includes(m.role)&&typeof m.content==='string')||!Number.isInteger(p.max_tokens)||p.max_tokens<1||p.max_tokens>4096)throw Error();p.url=url.toString();}catch{return json({error:'配置无效'},400);}
+
+function validContent(content:any){
+ if(typeof content==='string')return content.length<=70000;
+ if(!Array.isArray(content)||!content.length||content.length>4)return false;
+ return content.every((part:any)=>{
+  if(!part||typeof part!=='object')return false;
+  if(part.type==='text')return typeof part.text==='string'&&part.text.length<=70000;
+  if(part.type==='image_url'){
+   const url=part.image_url?.url;
+   return typeof url==='string'&&url.length<=130000&&/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(url);
+  }
+  return false;
+ });
+}
+
+export async function POST(request:Request){try{userId(request);if(!sameOrigin(request))return json({error:'来源无效'},403);const raw=await request.text();if(raw.length>420000)return json({error:'内容过长'},413);let p;try{p=JSON.parse(raw);const url=new URL(completionURL(p.url));if(!proxiedHosts.includes(url.hostname)||url.port||!['/chat/completions','/v1/chat/completions','/api/v1/chat/completions'].includes(url.pathname))throw Error();if(typeof p.key!=='string'||p.key.length>4096||typeof p.model!=='string'||p.model.length>150||!Array.isArray(p.messages)||!p.messages.length||!p.messages.every((m:any)=>m&&['system','user','assistant'].includes(m.role)&&validContent(m.content))||!Number.isInteger(p.max_tokens)||p.max_tokens<1||p.max_tokens>4096)throw Error();p.url=url.toString();}catch{return json({error:'配置无效'},400);}
  const upstream=await fetch(p.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${p.key}`},body:JSON.stringify({model:p.model,messages:p.messages,max_tokens:p.max_tokens,stream:p.stream===true}),redirect:'manual',signal:AbortSignal.any([request.signal,AbortSignal.timeout(80000)])});if(!upstream.ok)return json({error:'模型服务拒绝请求'},upstream.status);if(p.stream===true)return new Response(upstream.body,{headers:{'Content-Type':upstream.headers.get('Content-Type')||'text/event-stream','Cache-Control':'no-store'}});const result=await upstream.json() as any;return json({choices:result.choices});
  }catch(e){if(e instanceof Error&&e.message==='UNAUTHORIZED')return json({error:'请重新登录网站',code:'SITE_AUTH_REQUIRED'},401);return json({error:'无法连接模型服务'},502);}}
