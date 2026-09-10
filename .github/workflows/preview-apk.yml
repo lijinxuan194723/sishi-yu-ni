@@ -1,0 +1,129 @@
+name: Preview APK
+
+on:
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      - 'preview/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform and build tools
+        run: yes | sdkmanager 'platforms;android-35' 'build-tools;35.0.0' >/dev/null
+
+      - name: Restore preview signing key
+        id: signing-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/luke-preview.p12
+          key: luke-preview-signing-v1
+
+      - name: Create preview signing key
+        if: steps.signing-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -noprompt \
+            -alias luke-preview \
+            -keystore ~/.android/luke-preview.p12 \
+            -storetype PKCS12 \
+            -storepass android-preview \
+            -keypass android-preview \
+            -keyalg RSA \
+            -keysize 3072 \
+            -validity 10000 \
+            -dname 'CN=Four Seasons Luke Preview'
+
+      - name: Build mobile web bundle
+        run: npx vite build --config mobile/vite.config.mts
+
+      - name: Build preview APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ANDROID_JAR="$ANDROID_HOME/platforms/android-35/android.jar"
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          STAGE="$RUNNER_TEMP/luke-preview-apk"
+          OUTPUT="$GITHUB_WORKSPACE/outputs/android"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE/assets/web" "$STAGE/classes" "$STAGE/dex" "$STAGE/native" "$OUTPUT"
+          cp -R work/mobile-web/. "$STAGE/assets/web/"
+          cp mobile/android/MainActivity.java "$STAGE/native/MainActivity.java"
+          cp -R mobile/android/res "$STAGE/native/res"
+          cp mobile/android/AndroidManifest.xml "$STAGE/native/AndroidManifest.xml"
+
+          PREVIEW_CODE=$((900000 + GITHUB_RUN_NUMBER))
+          sed -i \
+            -e 's/package="com.luke.summer"/package="com.luke.summer.preview"/' \
+            -e 's/android:name="\.MainActivity"/android:name="com.luke.summer.MainActivity"/' \
+            -e 's/android:label="四时与你"/android:label="四时与你·测试"/' \
+            -e "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"${PREVIEW_CODE}\"/" \
+            -e "s/android:versionName=\"[^\"]*\"/android:versionName=\"preview-${GITHUB_RUN_NUMBER}\"/" \
+            "$STAGE/native/AndroidManifest.xml"
+
+          javac -encoding UTF-8 --release 8 \
+            -classpath "$ANDROID_JAR" \
+            -d "$STAGE/classes" \
+            "$STAGE/native/MainActivity.java"
+
+          mapfile -d '' CLASSES < <(find "$STAGE/classes" -name '*.class' -print0)
+          "$BUILD_TOOLS/d8" --lib "$ANDROID_JAR" --min-api 26 --output "$STAGE/dex" "${CLASSES[@]}"
+
+          "$BUILD_TOOLS/aapt" package -f \
+            -M "$STAGE/native/AndroidManifest.xml" \
+            -S "$STAGE/native/res" \
+            -A "$STAGE/assets" \
+            -I "$ANDROID_JAR" \
+            -F "$STAGE/unsigned.apk"
+
+          (
+            cd "$STAGE/dex"
+            "$BUILD_TOOLS/aapt" add "$STAGE/unsigned.apk" classes.dex
+          )
+
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$STAGE/unsigned.apk" "$STAGE/aligned.apk"
+          APK="$OUTPUT/Four-Seasons-Luke-Memo-Preview.apk"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks ~/.android/luke-preview.p12 \
+            --ks-key-alias luke-preview \
+            --ks-pass pass:android-preview \
+            --key-pass pass:android-preview \
+            --out "$APK" \
+            "$STAGE/aligned.apk"
+
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | grep -E 'package:|sdkVersion|targetSdkVersion|application-label:|launchable-activity'
+          sha256sum "$APK" | tee "$OUTPUT/Four-Seasons-Luke-Memo-Preview.sha256"
+
+      - name: Upload preview APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Four-Seasons-Luke-Memo-Preview
+          path: |
+            outputs/android/Four-Seasons-Luke-Memo-Preview.apk
+            outputs/android/Four-Seasons-Luke-Memo-Preview.sha256
+          if-no-files-found: error
+          retention-days: 14
