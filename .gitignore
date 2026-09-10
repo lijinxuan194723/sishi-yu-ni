@@ -19,12 +19,21 @@
 # misc
 .DS_Store
 *.pem
+*.log
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.npmrc
+
+# editors and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
 
 # local environment
 .env*
@@ -36,3 +45,12 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/.turbo/
+/.temp/
+/.cache/
+
+# mobile artifacts
+/mobile/.gradle/
+/mobile/build/
+/mobile/.idea/
+/mobile/.cxx/

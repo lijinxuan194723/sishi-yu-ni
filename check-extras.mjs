@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {parseData} from './lib/companion.ts';
+import {remainingFocus,finishFocus} from './lib/focus.ts';
+const old={name:'我',since:'2023-07-08',messages:[],notes:[],tasks:[],checks:[]};
+assert.deepEqual(parseData(JSON.stringify(old)),old);
+const now=Date.now(),focus={minutes:25,remainingMs:1500000,endsAt:now+1000};
+assert.equal(remainingFocus(focus,now),1000);assert.equal(remainingFocus(focus,now+2000),0);assert.equal(remainingFocus({...focus,endsAt:undefined,remainingMs:12000},now),12000);
+const data={...old,draft:'还没写完的话',tasks:[{id:'a',date:'2026-09-09',text:'散步',done:false,important:true}],focus};
+assert.deepEqual(parseData(JSON.stringify(data)),data);
+const finished={...data,...finishFocus(data,focus.endsAt)};assert.equal(finished.focus.remainingMs,0);assert.equal(finished.focusLog.length,1);assert.deepEqual(finishFocus(finished,focus.endsAt),{});assert.deepEqual(parseData(JSON.stringify(finished)),finished);
+for(const patch of [{draft:'a'.repeat(2001)},{focus:{minutes:0,remainingMs:0}},{focus:{minutes:10,remainingMs:-1}},{focus:{minutes:10,remainingMs:0,endsAt:'wrong'}},{focusLog:[{at:'bad-date',minutes:10}]},{tasks:[{...data.tasks[0],important:'yes'}]}])assert.throws(()=>parseData(JSON.stringify({...old,...patch})));
+console.log('PASS: legacy/extended backup roundtrip, draft and priorities, pause/elapsed timer, idempotent completion, invalid new fields');
+const countdown={seconds:3661,remainingMs:3661000,endsAt:Date.now()+3661000};assert.deepEqual(parseData(JSON.stringify({...old,countdown})).countdown,countdown);
+for(const seconds of [-1,86400,1.5])assert.throws(()=>parseData(JSON.stringify({...old,countdown:{seconds,remainingMs:0}})));
+assert.throws(()=>parseData(JSON.stringify({...old,countdown:{seconds:1,remainingMs:2000}})));

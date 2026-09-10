@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {networkFetch,saveBackupFile} from './lib/mobile.ts';
+import {complete} from './lib/model.ts';
+import {fetchWeather} from './lib/weather.ts';
+const calls=[];let canceled,backup;
+globalThis.window={LukeAndroid:{request(id,url,method,headers,body){calls.push({id,url,method,headers:JSON.parse(headers),body});if(url.includes('hang'))return;queueMicrotask(()=>window.__lukeNetwork(id,200,JSON.stringify(url.includes('open-meteo')?{current:{temperature_2m:22,weather_code:61,time:Math.floor(Date.now()/1000)}}:{choices:[{message:{content:'收到你的消息了。'}}]})));},cancel(id){canceled=id;},saveBackup(name,text){backup={name,text};}}};
+const config={baseUrl:'https://api.deepseek.com/v1',model:'deepseek-chat',key:'test-only'};
+assert.equal(await complete(config,[{role:'user',content:'你好'}]),'收到你的消息了。');
+assert.equal(calls[0].url,'https://api.deepseek.com/v1/chat/completions');assert.equal(calls[0].headers.authorization,'Bearer test-only');assert.equal(JSON.parse(calls[0].body).messages[0].content,'你好');assert.ok(!calls[0].body.includes('test-only'));
+const weather=await fetchWeather({provider:'open-meteo',lat:'31.2',lon:'121.4',key:'',place:'上海',effects:true});assert.equal(weather.kind,'rain');assert.equal(weather.temperature,22);
+await assert.rejects(()=>fetchWeather({provider:'caiyun',lat:'31.2',lon:'121.4',key:'../invalid',place:'',effects:true}),/Token/);
+const c=new AbortController();const p=networkFetch('https://hang.example/v1',{signal:c.signal});c.abort();await assert.rejects(()=>p,/Aborted/);assert.equal(canceled,calls.at(-1).id);
+window.__lukeNetwork(canceled,200,'late response');
+saveBackupFile('memory.json','{"messages":[]}');assert.deepEqual(backup,{name:'memory.json',text:'{"messages":[]}'});
+delete globalThis.window;
+console.log('PASS: Android direct model/weather transport, bearer header, native cancellation, late callback, token validation, backup export');

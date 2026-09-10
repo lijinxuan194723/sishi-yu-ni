@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {currentState,chatContext,memoryMessages} from './lib/model.ts';
+import {parseData,emptyMemory} from './lib/companion.ts';
+import {isFresh} from './lib/weather.ts';
+const now=new Date(2026,8,9,0,10),data={name:'冬清',since:'2023-07-08',messages:[{who:'me',text:'今天学了多久？'}],tasks:[],notes:[],checks:[],reading:{title:'活着',author:'余华',updatedAt:now.toISOString()},study:{subject:'英语',startedAt:new Date(2026,8,8,23,50).getTime()},focusLog:[{at:new Date(2026,8,9,0,0).toISOString(),minutes:3.8,group:'数学'},{at:new Date(2026,8,8,10).toISOString(),minutes:60,group:'数学'}]};
+assert.deepEqual(parseData(JSON.stringify(data)).reading,data.reading);
+assert.throws(()=>parseData(JSON.stringify({...data,reading:{title:'',author:'',updatedAt:'bad'}})));
+const state=currentState(data,'小雨',now);
+assert.equal(state.study.totalMinutes,13);assert.deepEqual(state.study.subjects,[{subject:'数学',minutes:3},{subject:'英语',minutes:10}]);
+assert.equal(currentState({...data,study:undefined},'',new Date(2026,8,10)).study.totalMinutes,0);
+const first=chatContext(data,'小雨',now),next=chatContext({...data,reading:{...data.reading,title:'海子诗全集'}},'晴',new Date(2026,8,9,0,20));
+assert.match(first.at(-2).content,/活着/);assert.match(next.at(-2).content,/海子诗全集/);assert.doesNotMatch(next.at(-2).content,/活着/);assert.equal(next.at(-1).content,'今天学了多久？');
+assert.match(currentState({...data,reading:undefined},'',now).reading,/尚未/);
+assert.doesNotMatch(JSON.stringify(memoryMessages(emptyMemory,data.messages)),/活着|数学|小雨/);
+assert.equal(isFresh({fetchedAt:now.getTime(),observedAt:now.getTime()},now.getTime()+16*60000),false);
+console.log('PASS: per-turn reading updates, backup validation, midnight active timer, daily reset, current message ordering, snapshot excluded from summary, weather expiry');

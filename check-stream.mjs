@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readCompletionStream} from './lib/stream.ts';
+import {complete} from './lib/model.ts';
+const encoder=new TextEncoder();const event=t=>'data: '+JSON.stringify({choices:[{delta:{content:t}}]})+'\r\n\r\n';
+let source,first;const firstToken=new Promise(resolve=>first=resolve),seen=[];
+const stream=new ReadableStream({start(c){source=c;}});
+const reply=readCompletionStream(new Response(stream),t=>{seen.push(t);first();});
+source.enqueue(encoder.encode(event('你好')));await firstToken;assert.deepEqual(seen,['你好']);
+for(const byte of encoder.encode(event('，夏彦🙂')+'data: [DONE]\n\n'))source.enqueue(Uint8Array.of(byte));
+assert.equal(await reply,'你好，夏彦🙂');assert.equal(seen.at(-1),'你好，夏彦🙂');
+const partial=[];await assert.rejects(()=>readCompletionStream(new Response(event('未完成')),t=>partial.push(t)),/提前结束/);assert.deepEqual(partial,['未完成']);
+await assert.rejects(()=>readCompletionStream(new Response('data: nope\n\n'),()=>{}),/格式/);
+const old=globalThis.fetch;globalThis.fetch=async(_,init)=>{assert.equal(JSON.parse(init.body).stream,true);return new Response(event('逐步输出')+'data: [DONE]\n\n',{headers:{'Content-Type':'text/event-stream'}});};assert.equal(await complete({baseUrl:'https://api.deepseek.com/v1',model:'test',key:'test'},[],undefined,1500,()=>{}),'逐步输出');globalThis.fetch=old;
+globalThis.window={LukeAndroid:{requestStream(id){queueMicrotask(()=>{window.__lukeStreaming(id,200,'text/event-stream',event('🙂').slice(0,event('🙂').indexOf('🙂')+1),false);window.__lukeStreaming(id,200,'text/event-stream',event('🙂').slice(event('🙂').indexOf('🙂')+1)+'data: [DONE]\n\n',true);});},cancel(){}}};
+assert.equal(await complete({baseUrl:'https://custom.example/v1',model:'test',key:'test'},[],undefined,1500,()=>{}),'🙂');delete globalThis.window;
+console.log('PASS: first token before completion, fragmented UTF-8/SSE/CRLF, interrupted partial retention, real stream request, native surrogate split');

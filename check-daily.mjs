@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {dailyScenes,dailyScene,occasion} from './lib/daily.ts';
+import {parseData,dateKey} from './lib/companion.ts';
+import {locationLabel,resolveDistrict} from './lib/location.ts';
+assert.equal(dailyScenes.reduce((n,g)=>n+g.items.length,0),120);
+assert.equal(new Set(dailyScenes.flatMap(g=>g.items)).size,120);
+for(const h of [1,7,10,13,16,20]){const now=new Date(2026,8,9,h);assert.equal(new Set(Array.from({length:20},(_,i)=>dailyScene(now,i).id)).size,20);assert.notEqual(dailyScene(now).id,dailyScene(new Date(2026,8,10,h)).id);}
+assert.equal(dailyScene(new Date(2026,8,9,2)).place,'家中');
+assert.equal(occasion('2000-02-29',new Date(2027,1,28,23)).days,0);
+assert.equal(occasion('2022-09-09',new Date(2026,8,9)).years,4);
+assert.equal(occasion('2022-09-09',new Date(2026,8,9)).days,0);
+assert.equal(occasion('2022-01-01',new Date(2026,11,31)).days,1);
+const original={name:'我',since:'2022-09-09',messages:[],tasks:[],notes:[],checks:[],birthday:'2000-02-29',anniversaries:[{id:'1',title:'第一次见面',date:'2020-06-01'}]};
+assert.deepEqual(parseData(JSON.stringify(original)),original);
+assert.throws(()=>parseData(JSON.stringify({...original,birthday:'2000-02-30'})));
+assert.throws(()=>parseData(JSON.stringify({...original,anniversaries:[{id:'1',title:' ',date:'2020-06-01'}]})));
+assert.equal(locationLabel({address:{city:'北京市',county:'海淀区'}}),'北京市 · 海淀区');
+assert.equal(locationLabel({features:[{properties:{geocoding:{city:'北京市',district:'海淀街道',admin:{level8:'海淀街道',level6:'海淀区',level4:'北京市'}}}}]}),'北京市 · 海淀区');
+assert.throws(()=>locationLabel({city:'北京市',locality:'幸福社区'}));
+const saved=globalThis.fetch;const calls=[];
+globalThis.fetch=async url=>{calls.push(String(url));return String(url).includes('bigdatacloud')?new Response('{}',{status:503}):Response.json({address:{city:'杭州市',county:'西湖区'}});};
+try{assert.equal(await resolveDistrict('30.1','120.1',undefined,true,true),'杭州市 · 西湖区');assert.equal(calls.length,2);assert.equal(await resolveDistrict('30.1','120.1'),'杭州市 · 西湖区');assert.equal(calls.length,2);await assert.rejects(resolveDistrict('91','120'));const stop=new AbortController();stop.abort();await assert.rejects(resolveDistrict('30','120',stop.signal));}finally{globalThis.fetch=saved;}
+const page=fs.readFileSync('app/page.tsx','utf8'),connections=fs.readFileSync('components/connections.tsx','utf8'),ambience=fs.readFileSync('components/ambience.tsx','utf8');
+assert.ok(!page.includes('<Dialog open={!!stamp}'));
+assert.ok(page.includes('setStamp(stamp===i?null:i)')&&page.includes('search-results')&&page.includes('jumpToMessage'));
+assert.ok(connections.includes("localStorage.setItem('luke-model-key',m.key)"));
+assert.ok(!connections.includes("sessionStorage.setItem('luke-model-key'"));
+assert.ok(!connections.includes('config.lat+"°, "'));
+assert.ok(ambience.includes('await photo.decode()')&&ambience.includes('queue.current'));
+console.log('PASS: 120 distinct time-aware scenarios, leap birthdays, anniversary boundaries, backup validation, district fallback/cache/cancel, durable keys, inline timestamps and independent search');

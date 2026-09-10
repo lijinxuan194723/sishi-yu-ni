@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {swapPhoto} from './lib/photo-transition.ts';
+globalThis.window={matchMedia:()=>({matches:false})};
+let decoded,finished,started=0;
+const front={style:{opacity:'1',objectPosition:'center 40%'}};
+const back={style:{},src:'',decode:()=>new Promise(r=>decoded=r),animate:()=>{started++;return {finished:new Promise(r=>finished=r),cancel(){}}}};
+const pending=swapPhoto(front,back,'winter.png','center 32%',()=>false);
+assert.equal(front.style.opacity,'1');assert.equal(front.style.objectPosition,'center 40%');assert.equal(back.style.opacity,'0');assert.equal(started,0);
+decoded();await Promise.resolve();await Promise.resolve();assert.equal(started,1);assert.equal(front.style.opacity,'1');
+finished();assert.equal(await pending,true);assert.equal(back.style.opacity,'1');assert.equal(front.style.opacity,'0');
+const cancelledFront={style:{opacity:'1'}},cancelledBack={style:{},decode:async()=>{},animate:()=>{throw Error('cancelled request animated');}};
+assert.equal(await swapPhoto(cancelledFront,cancelledBack,'spring.png','center 40%',()=>true),false);assert.equal(cancelledFront.style.opacity,'1');
+const failedBack={style:{},decode:async()=>{throw Error('decode failed');}};
+await assert.rejects(swapPhoto(cancelledFront,failedBack,'bad.png','center',()=>false));assert.equal(cancelledFront.style.opacity,'1');
+console.log('PASS: outgoing frame survives decode and full fade; crop remains stable; cancelled and failed loads preserve visible frame');

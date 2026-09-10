@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const dialog=fs.readFileSync('components/ui/dialog.tsx','utf8'),page=fs.readFileSync('app/page.tsx','utf8');
+const fullScreen=dialog.match(/fullScreen\s*\? '([^']+)'/)[1];
+assert.match(fullScreen,/inset-0/);
+assert.doesNotMatch(fullScreen,/translate|zoom|top-1\/2|left-1\/2/);
+assert.match(page,/<DialogContent fullScreen className="birthday-screen">/);
+assert.ok(page.includes('setBirthdayPreview(true);setSettings(false);setBirthdayOpen(true)'));
+assert.ok(page.includes('if(birthdayPreview)setSettings(true)'));
+assert.ok(fs.readFileSync('mobile/android/MainActivity.java','utf8').includes('dialogs[dialogs.length-1]'));
+console.log('PASS: fullscreen does not inherit centered-dialog offsets, preview replaces settings and returns, Android back closes topmost dialog');

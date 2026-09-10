@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {locationLabel} from './lib/location.ts';
+import {ambienceAt,readAppearance,autoAppearance} from './lib/ambience.ts';
+assert.equal(locationLabel({city:'西安市',locality:'某街道',localityInfo:{administrative:[{name:'陕西省'},{name:'西安市'},{name:'长安区'}]}}),'西安市 · 长安区');
+assert.equal(locationLabel({city:'北京市',localityInfo:{administrative:[{name:'北京市'},{name:'海淀区'}]}}),'北京市 · 海淀区');
+assert.equal(locationLabel({city:'香港',localityInfo:{administrative:[{name:'香港特别行政区'},{name:'沙田区'}]}}),'香港 · 沙田区');
+assert.throws(()=>locationLabel({}));
+assert.deepEqual(readAppearance({season:'wrong',period:42}),autoAppearance);
+const d=new Date(2026,8,9,12);assert.equal(ambienceAt(d,{season:'winter',period:'夜晚'}).season,'winter');assert.equal(ambienceAt(d,{season:'winter',period:'夜晚'}).night,1);assert.equal(ambienceAt(d).season,'autumn');assert.equal(d.getHours(),12);
+const source=fs.readFileSync('app/page.tsx','utf8');assert.ok(!source.includes('scrollIntoView'));const chat=source.split('<TabsContent value="chat"')[1].split('<TabsContent value="heart"')[0];assert.ok(!/page-heading|ConnectionForm|初版预设/.test(chat));assert.ok(chat.includes('ref={messagesPane}'));for(const section of ['model','weather','appearance','memory'])assert.ok(source.includes(`value="${section}"`));
+console.log('PASS: district extraction/failure, manual season/time and auto fallback, no nested page-scrolling call, classified settings');
