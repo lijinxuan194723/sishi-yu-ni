@@ -34,6 +34,8 @@ export function useStartup(ready:boolean){
  useEffect(()=>{
   if(!ready||document.documentElement.dataset.started)return;
   let cancelled=false,leaveTimer=0,removeTimer=0;
+  const root=document.documentElement;
+  root.dataset.startupPhase='cover';
   const splash=document.createElement('div');
   splash.className='startup-splash';
   splash.setAttribute('role','status');
@@ -48,13 +50,19 @@ export function useStartup(ready:boolean){
    window.LukeAndroid?.pageReady?.();
    requestAnimationFrame(()=>splash.dataset.show='true');
    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-   leaveTimer=window.setTimeout(()=>{if(!cancelled)splash.dataset.leave='true';},reduced?320:1280);
+   leaveTimer=window.setTimeout(()=>{
+    if(cancelled)return;
+    root.dataset.startupPhase='handoff';
+    splash.dataset.leave='true';
+   },reduced?260:1120);
    removeTimer=window.setTimeout(()=>{
     if(cancelled)return;
     document.documentElement.dataset.started='true';
+    root.dataset.startupPhase='done';
     splash.remove();
-   },reduced?520:1780);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(root.dataset.startupPhase==='done')delete root.dataset.startupPhase;}));
+   },reduced?520:1880);
   })();
-  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(removeTimer);splash.remove();};
+  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(removeTimer);splash.remove();delete root.dataset.startupPhase;};
  },[ready]);
 }
