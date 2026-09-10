@@ -1,0 +1,57 @@
+name: Apply full backup UI
+
+on:
+  push:
+    branches:
+      - 'feat/memo-notes'
+    paths:
+      - '.github/workflows/apply-full-backup-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/memo-notes
+          fetch-depth: 0
+      - name: Patch full backup UI
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/page.tsx')
+          s=p.read_text(encoding='utf-8')
+
+          old="import {ChatAttachmentPicker,attachmentChatContent,storedChatText,useChatAttachments} from '@/components/chat-attachments';"
+          new=old+"\nimport {fullBackupSummary,parseFullBackup,restoreFullBackup,stringifyFullBackup} from '@/lib/full-backup';"
+          assert old in s and "stringifyFullBackup" not in s
+          s=s.replace(old,new,1)
+
+          old=" function backup(){const time=new Date().toTimeString().slice(0,8).replaceAll(':','');saveBackupFile(`四时与你-${today}-${time}.json`,JSON.stringify(data,null,2));}\n function backupOriginal(){try{const raw=localStorage.getItem('luke-companion-v1');if(!raw){setError('没有可导出的原始存档。');return;}saveBackupFile('四时与你-原始存档.json',raw);}catch{setError('无法读取原始存档。');}}"
+          new=""" function backup(){const time=new Date().toTimeString().slice(0,8).replaceAll(':','');saveBackupFile(`四时与你-${today}-${time}.json`,JSON.stringify(data,null,2));}\n function backupAll(){try{const time=new Date().toTimeString().slice(0,8).replaceAll(':','');saveBackupFile(`四时与你-完整备份-${today}-${time}.json`,stringifyFullBackup(data));setError('');}catch(e){setError(e instanceof Error?`完整备份失败：${e.message}`:'完整备份失败，请重试。');}}\n async function restoreBackupFile(file:File){\n  if(file.size>15_000_000)throw Error('备份文件过大');\n  const text=await file.text();\n  try{\n   const full=parseFullBackup(text),summary=fullBackupSummary(full);\n   if(!window.confirm(`这是完整备份：${summary.messages} 条聊天、${summary.tasks} 项计划、${summary.memos} 条统一笔记、${summary.folders} 个笔记本，以及外观、位置和其他 ${summary.storageKeys} 项应用本地状态。\\n\\nAPI Key、天气 Token 等敏感密钥不包含在备份中。恢复会替换当前本地数据，建议先导出当前完整备份。继续恢复？`))return;\n   restoreFullBackup(full);location.reload();return;\n  }catch(fullError){\n   try{\n    const restored=parseData(text);\n    if(!window.confirm(`这是旧版数据备份：${restored.messages.length} 条聊天、${restored.notes.length} 篇旧手记、${restored.tasks.length} 项计划、${restored.focusLog?.length??0} 条学习记录。\\n\\n恢复将替换主数据，但不会改动新版笔记工作区和外观设置。继续恢复？`))return;\n    restore(restored);setError('');return;\n   }catch{throw fullError;}\n  }\n }\n function backupOriginal(){try{const raw=localStorage.getItem('luke-companion-v1');if(!raw){setError('没有可导出的原始存档。');return;}saveBackupFile('四时与你-原始存档.json',raw);}catch{setError('无法读取原始存档。');}}"""
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old='<button className="primary" onClick={backup}><Download size={17}/> 导出完整数据备份</button>'
+          new='<button className="primary" onClick={backupAll}><Download size={17}/> 导出软件完整备份</button><small>完整备份包含聊天、计划、统一笔记、笔记本、学习/阅读记录、纪念日、外观与非敏感连接设置；API Key 和 Token 不会写入文件。</small>'
+          assert old in s
+          s=s.replace(old,new,1)
+
+          start='<label>从备份恢复（替换当前本地记录）<input disabled={busy} type="file" accept="application/json,.json" onChange={async e=>{const input=e.currentTarget,file=input.files?.[0];if(!file)return;try{if(file.size>10000000)throw Error();const restored=parseData(await file.text());if(!window.confirm(`备份包含：${restored.messages.length} 条聊天、${restored.notes.length} 篇手记、${restored.tasks.length} 项计划、${restored.focusLog?.length??0} 条学习记录、${restored.anniversaries?.length??0} 个纪念日、${restored.books?.length??0} 本自定义书目，以及阅读进度、近况开关、生日、相伴日期和聊天草稿。\\n\\n恢复将替换当前记录，接口设置保持不变。建议先导出当前数据。继续恢复？`))return;restore(restored);setError(\'\');}catch{setError(\'恢复失败：文件过大或格式不正确，原有记录未修改。\');}finally{input.value=\'\';}}}/></label>'
+          repl='<label>从备份恢复（支持完整备份与旧版备份）<input disabled={busy} type="file" accept="application/json,.json" onChange={async e=>{const input=e.currentTarget,file=input.files?.[0];if(!file)return;try{await restoreBackupFile(file);}catch{setError(\'恢复失败：文件过大、格式不正确或数据校验未通过，原有记录未修改。\');}finally{input.value=\'\';}}}/></label>'
+          assert start in s
+          s=s.replace(start,repl,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          git rm .github/workflows/apply-full-backup-ui.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx
+          git commit -m "feat: add full app backup and restore"
+          git push origin HEAD:feat/memo-notes
