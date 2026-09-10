@@ -33,9 +33,10 @@ export function useStartup(ready:boolean){
  },[]);
  useEffect(()=>{
   if(!ready||document.documentElement.dataset.started)return;
-  let cancelled=false,leaveTimer=0,removeTimer=0;
+  let cancelled=false,leaveTimer=0,navTimer=0,removeTimer=0,finishTimer=0;
   const root=document.documentElement;
   root.dataset.startupPhase='cover';
+  root.dataset.startupNav='hidden';
   const splash=document.createElement('div');
   splash.className='startup-splash';
   splash.setAttribute('role','status');
@@ -56,14 +57,23 @@ export function useStartup(ready:boolean){
     root.dataset.startupPhase='handoff';
     splash.dataset.leave='true';
    },reduced?300:1180);
+   // Bottom navigation is a separate stage: do not let CSS transition-delay decide this.
+   navTimer=window.setTimeout(()=>{
+    if(cancelled)return;
+    root.dataset.startupNav='show';
+   },reduced?420:1700);
    removeTimer=window.setTimeout(()=>{
     if(cancelled)return;
     root.dataset.started='true';
     root.dataset.startupPhase='done';
     splash.remove();
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(root.dataset.startupPhase==='done')delete root.dataset.startupPhase;}));
    },reduced?560:2080);
+   finishTimer=window.setTimeout(()=>{
+    if(cancelled)return;
+    delete root.dataset.startupPhase;
+    delete root.dataset.startupNav;
+   },reduced?700:2320);
   })();
-  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(removeTimer);splash.remove();delete root.dataset.startupPhase;};
+  return()=>{cancelled=true;clearTimeout(leaveTimer);clearTimeout(navTimer);clearTimeout(removeTimer);clearTimeout(finishTimer);splash.remove();delete root.dataset.startupPhase;delete root.dataset.startupNav;};
  },[ready]);
 }
