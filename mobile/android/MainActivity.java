@@ -18,6 +18,7 @@ import java.util.concurrent.*;
 
 public class MainActivity extends Activity {
  private static final String ORIGIN="https://appassets.androidplatform.net";
+ private static final String LEGACY_PACKAGE="com.luke.summer";
  private WebView web;
  private android.widget.FrameLayout viewport;
  private boolean darkSystemBars=true;
@@ -86,6 +87,7 @@ public class MainActivity extends Activity {
  private void deliver(String id,int status,String body){if(!active.remove(id))return;String script="window.__lukeNetwork&&window.__lukeNetwork("+JSONObject.quote(id)+","+status+","+JSONObject.quote(body)+")";runOnUiThread(()->{if(!isDestroyed())web.evaluateJavascript(script,null);});}
  private void streamPart(String id,int status,String type,String text,boolean done){if(!active.contains(id))return;if(done)active.remove(id);String script="window.__lukeStreaming&&window.__lukeStreaming("+JSONObject.quote(id)+","+status+","+JSONObject.quote(type)+","+JSONObject.quote(text)+","+done+")";runOnUiThread(()->{if(!isDestroyed())web.evaluateJavascript(script,null);});}
  private void applySystemTheme(){String color=systemColor.isEmpty()?"#214f4c":systemColor;boolean dark=darkSystemBars;int value=Color.parseColor(color);viewport.setBackgroundColor(value);getWindow().setStatusBarColor(value);getWindow().setNavigationBarColor(value);if(android.os.Build.VERSION.SDK_INT>=30){android.view.WindowInsetsController c=getWindow().getInsetsController();if(c!=null){int mask=android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS|android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;c.setSystemBarsAppearance(dark?0:mask,mask);}}else getWindow().getDecorView().setSystemUiVisibility(dark?0:android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);}
+ private Intent legacyLaunchIntent(){if(getPackageName().equals(LEGACY_PACKAGE))return null;try{return getPackageManager().getLaunchIntentForPackage(LEGACY_PACKAGE);}catch(Exception ignored){return null;}}
  public class Bridge {
   @JavascriptInterface public String defaultModel(){try(InputStream in=getAssets().open("personal-model.json");ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buffer=new byte[1024];int n;while((n=in.read(buffer))!=-1)out.write(buffer,0,n);return out.toString("UTF-8");}catch(Exception ignored){return "{}";}}
   @JavascriptInterface public void haptic(){runOnUiThread(()->{if(!isDestroyed())web.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);});}
@@ -98,6 +100,8 @@ public class MainActivity extends Activity {
    if(color==null||!color.matches("#[0-9a-fA-F]{6}"))return;
    runOnUiThread(()->{if(isDestroyed()||(color.equals(systemColor)&&dark==darkSystemBars))return;systemColor=color;darkSystemBars=dark;if(contentReady)applySystemTheme();});
   }
+  @JavascriptInterface public boolean legacyAppInstalled(){return legacyLaunchIntent()!=null;}
+  @JavascriptInterface public void openLegacyApp(){runOnUiThread(()->{Intent launch=legacyLaunchIntent();if(launch==null){toast("未找到仍保留旧数据的旧版应用");return;}try{startActivity(launch);}catch(Exception e){toast("无法打开旧版应用");}});}
 
   @JavascriptInterface public void geocode(String id,double lat,double lon){
    if(id==null||id.length()>80||Double.isNaN(lat)||Double.isNaN(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return;
@@ -132,4 +136,3 @@ public class MainActivity extends Activity {
   @JavascriptInterface public void saveBackup(String name,String text){if(text==null||text.length()>16000000){toast("备份过大，暂时无法导出");return;}runOnUiThread(()->{if(exportText!=null){toast("请先完成当前导出");return;}exportText=text;try{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");i.putExtra(Intent.EXTRA_TITLE,name.replaceAll("[\\\\/:*?\"<>|]","_"));startActivityForResult(i,11);}catch(Exception e){exportText=null;toast("无法打开保存窗口");}});}
  }
 }
-
