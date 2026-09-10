@@ -1,4 +1,4 @@
-import {prefersReducedMotion} from './motion';
+function reducedMotion(){return typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;}
 
 export async function swapPhoto(front:HTMLImageElement,back:HTMLImageElement,src:string,position:string,signal?:AbortSignal){
  if(signal?.aborted)return false;
@@ -8,7 +8,7 @@ export async function swapPhoto(front:HTMLImageElement,back:HTMLImageElement,src
  back.style.opacity='0';back.style.zIndex='2';back.style.objectPosition=position;back.src=src;
  await back.decode();
  if(signal?.aborted)return false;
- const duration=prefersReducedMotion()?0:420;
+ const duration=reducedMotion()?0:420;
  if(!duration){back.style.opacity='1';back.style.zIndex='1';front.style.opacity='0';front.style.zIndex='0';return true;}
  const incoming=back.animate([{opacity:0},{opacity:1}],{duration,easing:'cubic-bezier(.22,.72,.24,1)',fill:'forwards'});
  const outgoing=front.animate([{opacity:1},{opacity:0}],{duration,easing:'cubic-bezier(.22,.72,.24,1)',fill:'forwards'});
