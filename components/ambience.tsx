@@ -1,5 +1,7 @@
 'use client';
-import {memo,useMemo,startTransition,useEffect,useState,useRef,type CSSProperties} from 'react';
+import {memo,useMemo,useEffect,useLayoutEffect,useState,useRef,type CSSProperties} from 'react';
+import {flushSync} from 'react-dom';
+import {seasonAlbums} from '@/lib/season-albums';
 import {swapPhoto} from '@/lib/photo-transition';
 import {Flower2,Leaf,Snowflake,Sparkles,Sunrise,Sun,Sunset,Moon} from 'lucide-react';
 import {ambienceAt,seasonPhotos,seasons,autoAppearance,readAppearance,type Appearance} from '@/lib/ambience';
@@ -8,7 +10,33 @@ export function useAmbience(paused=false,preview=false){
  useEffect(()=>{try{setOptionsState(readAppearance(JSON.parse(localStorage.getItem('luke-appearance-v1')||'null')));}catch{}setLoaded(true);},[]);
  function setOptions(next:Appearance){setOptionsState(next);try{localStorage.setItem('luke-appearance-v1',JSON.stringify(next));setAppearanceError('');}catch{setAppearanceError('外观已切换，但当前设备未能保存设置。');}}
  const [scene,setScene]=useState<ReturnType<typeof ambienceAt>|null>(null);
- useEffect(()=>{if(!loaded||paused)return;let alive=true;const update=async()=>{let current=options;try{if(!preview)current=readAppearance(JSON.parse(localStorage.getItem('luke-appearance-v1')||'null'));}catch{}const next=ambienceAt(new Date(),current);const target=preview?document.querySelector<HTMLElement>('.settings'):document.documentElement;if(!target)return;if(target.dataset.season!==next.season){const photo=new Image();photo.src=seasonPhotos[next.season];try{await photo.decode();}catch{}}if(!alive)return;startTransition(()=>setScene(next));target.dataset.season=next.season;target.dataset.effects=current.effects===false?'off':'on';target.dataset.manual=current.period==='auto'?'false':'true';target.dataset.night=next.night>.5?'true':'false';if(!preview)window.LukeAndroid?.systemTheme?.(next.night>.5?'#202c37':({spring:'#f3fcf7',summer:'#f2fbff',autumn:'#fff5e5',winter:'#f8f9ff'})[next.season],next.night>.5);};update();const timer=setInterval(()=>{if(!document.hidden)update();},30000);const wake=()=>{document.documentElement.dataset.paused=document.hidden?'true':'false';if(!document.hidden)update();};document.addEventListener('visibilitychange',wake);window.addEventListener('focus',update);return()=>{alive=false;clearInterval(timer);document.removeEventListener('visibilitychange',wake);window.removeEventListener('focus',update);};},[options,loaded,paused,preview]);
+ useEffect(()=>{
+  if(!loaded||paused)return;
+  let alive=true,request=0;
+  const update=async()=>{
+   const id=++request;
+   let current=options;
+   try{if(!preview)current=readAppearance(JSON.parse(localStorage.getItem('luke-appearance-v1')||'null'));}catch{}
+   const next=ambienceAt(new Date(),current);
+   const target=preview?document.querySelector<HTMLElement>('.settings'):document.documentElement;
+   if(!target)return;
+   // Always yield before flushSync, including the no-image-change path.
+   try{await Promise.all([...new Set([seasonPhotos[next.season],...(!preview?[seasonAlbums[next.season][0]]:[])])].map(async src=>{const image=new Image();image.src=src;await image.decode();}));}
+   catch{if(alive&&id===request)setAppearanceError('主题图片加载失败，已保留当前画面，请重试。');return;}
+   if(!alive||id!==request)return;
+   target.dataset.season=next.season;
+   target.dataset.effects=current.effects===false?'off':'on';
+   target.dataset.manual=current.period==='auto'?'false':'true';
+   target.dataset.night=next.night>.5?'true':'false';
+   flushSync(()=>setScene(next));
+   if(!preview)window.LukeAndroid?.systemTheme?.(next.night>.5?'#202c37':({spring:'#f3fcf7',summer:'#f2fbff',autumn:'#fff5e5',winter:'#f8f9ff'})[next.season],next.night>.5);
+  };
+  void update();
+  const timer=setInterval(()=>{if(!document.hidden)void update();},30000);
+  const wake=()=>{document.documentElement.dataset.paused=document.hidden?'true':'false';if(!document.hidden)void update();};
+  document.addEventListener('visibilitychange',wake);window.addEventListener('focus',update);
+  return()=>{alive=false;clearInterval(timer);document.removeEventListener('visibilitychange',wake);window.removeEventListener('focus',update);};
+ },[options,loaded,paused,preview]);
  return {scene,options,setOptions,appearanceError};
 }
 export const Ambience=memo(function Ambience({scene}:{scene:ReturnType<typeof ambienceAt>|null}){
@@ -21,7 +49,7 @@ export function SeasonPhoto({season,className="",src}:{season:typeof seasons[num
  const photo=src??seasonPhotos[season];
  const initialPhoto=useRef(photo);
  const first=useRef<HTMLImageElement>(null),second=useRef<HTMLImageElement>(null),initial=useRef(season),shown=useRef(photo),front=useRef(0),queue=useRef(Promise.resolve());
- useEffect(()=>{let cancelled=false;queue.current=queue.current.catch(()=>{}).then(async()=>{
+ useLayoutEffect(()=>{let cancelled=false;queue.current=queue.current.catch(()=>{}).then(async()=>{
   if(cancelled||shown.current===photo||!first.current||!second.current)return;
   const nodes=[first.current,second.current],position='center '+({spring:'40%',summer:'32%',autumn:'32%',winter:'40%'})[season];
   const changed=await swapPhoto(nodes[front.current],nodes[1-front.current],photo,position,()=>cancelled);
