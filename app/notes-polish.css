@@ -147,3 +147,48 @@
 @media(prefers-reduced-motion:reduce){
   .page-bar .bar-actions>.round,.page-bar .bar-actions>.bar-today,.composer,.composer>textarea,.composer>.primary{transition:none!important}
 }
+
+/* A matched action pair, scoped to the private-chat composer. */
+:root .chat-page .composer{
+  align-items:flex-end;
+  gap:8px;
+  padding:10px 12px;
+}
+:root .chat-page .composer>textarea{
+  min-width:0;
+  border-radius:14px;
+  height:46px;
+  min-height:46px;
+}
+:root .chat-page .composer>button[aria-label="添加图片或文件"],
+:root .chat-page .composer>.primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 46px;
+  width:46px;
+  min-width:46px;
+  height:46px;
+  min-height:46px;
+  padding:0;
+  border:1px solid var(--scene-border);
+  border-radius:14px;
+  box-shadow:none;
+}
+:root .chat-page .composer>button[aria-label="添加图片或文件"]{
+  background:var(--scene-paper);
+  color:var(--season-accent);
+}
+:root .chat-page .composer>.primary{
+  background:var(--season-accent);
+  border-color:transparent;
+  color:#fff;
+}
+:root .chat-page .composer>button svg{width:20px;height:20px}
+:root .chat-page .messages{gap:18px;padding:18px 16px}
+:root .chat-page .message p{border-radius:6px 18px 18px 18px;line-height:1.75}
+:root .chat-page .message.mine p{border-radius:18px 6px 18px 18px}
+@media(max-width:360px){
+  :root .chat-page .composer{gap:6px;padding-inline:8px}
+  :root .chat-page .messages{padding-inline:12px}
+}
