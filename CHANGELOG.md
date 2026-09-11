@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v1.9.4 正式版（2026-09-11）
+- 启动流程：移除启动遮罩与开屏编排，`components/startup.tsx` 大幅精简，`app/layout.tsx` 不再引入 `startup-splash.css` / `startup-reveal.css` / `startup-nav.css`，进入应用后直接显示主界面与底部导航。
+- 时光手记：编辑器、新建按钮与笔记本浮层改用 Portal 渲染到 `document.body`，并按 `visualViewport` 动态调整编辑器高度，修复移动端键盘弹出时的遮挡与错位。
+- 样式统一：调整 `app/notes-polish.css` 与 `components/memo-board.module.css`，统一时光手记与聊天输入区（composer）的对齐与高度。
+- 新增模块：`lib/agent/` 提供夏彦人格（`constitution` / `persona-builder` / `style` / `situations`）与长期记忆（`memory/store` / `memory/types`）基础代码。该模块目前为独立代码，尚未接入界面。
+- 版本号：Android 版本号升级为 1.9.4（versionCode 901004），构建脚本输出名同步为 `Four-Seasons-Luke-1.9.4.apk`。
+- 版本说明：1.9.3 为本地中间构建，未单独发布，其改动已并入 1.9.4；versionCode 由 901002 直接递增到 901004。
+- 发布状态：本版本尚未提交到 git 仓库，仓库最高 tag 仍为 `android-four-seasons-v1.9.2`。
+
 ## v1.9.2 正式版（2026-09-11）
 - 正式发布：将已完成真机验证的 `dev/local-work` 稳定版本合入 `main`，正式基线为提交 `03c1109dd76843917dda7f3c84e2571cb889bf5c`。
 - 修复：移除启动遮罩/开屏编排造成的等待与卡顿，应用进入后直接显示主界面与底部导航。
