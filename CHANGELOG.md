@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v1.9.5 正式版（2026-09-11）
+- 新增：`lib/daily-picks.ts` 每日推荐模块，用内置模型 API 生成当天内容，并按日期缓存在本地（存储键 `luke-daily-picks-v1`），同一天不重复请求。
+- 新增：`components/daily-picks.tsx` 提供 `useDailyPicks`，在页面级调用一次；打开应用时若缓存不是今天的就自动更新。
+- 修改：「夏彦的随身歌单」改用今日歌单（8 到 10 首，标题显示「今日 · N 首」），「换一首」在今日歌单内切换，并新增刷新按钮。
+- 修改：「最近在读」把今日推荐的书排在书单最前并标注「今日推荐」，原有内置书目、用户添加的书籍和「添加书籍」流程不变，并新增刷新按钮。
+- 兜底：未配置模型或请求失败时回退到内置的本地内容，失败原因显示在歌单下方，界面不会空白。
+- 版本号：Android 版本号升级为 1.9.5（versionCode 901005），构建脚本输出名同步为 `Four-Seasons-Luke-1.9.5.apk`，`package.json` 同步为 1.9.5。
+
 ## v1.9.4 正式版（2026-09-11）
 - 启动流程：移除启动遮罩与开屏编排，`components/startup.tsx` 大幅精简，`app/layout.tsx` 不再引入 `startup-splash.css` / `startup-reveal.css` / `startup-nav.css`，进入应用后直接显示主界面与底部导航。
 - 时光手记：编辑器、新建按钮与笔记本浮层改用 Portal 渲染到 `document.body`，并按 `visualViewport` 动态调整编辑器高度，修复移动端键盘弹出时的遮挡与错位。
