@@ -3,6 +3,7 @@ name: Check Luke Memory V2
 on:
   push:
     branches:
+      - feat/luke-agent-memory-zh
       - feat/luke-agent-memory-zh-v2
     paths:
       - 'data/luke/**'
