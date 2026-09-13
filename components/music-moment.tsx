@@ -1,31 +1,16 @@
 'use client';
-import {useEffect,useState} from 'react';
-import {Music2,Shuffle,RefreshCw} from 'lucide-react';
-import {songs} from '@/lib/music';
+import {Music2,RefreshCw} from 'lucide-react';
+import {dateKey} from '@/lib/companion';
 import type {DailyState} from '@/components/daily-picks';
+import {RecommendationComment} from '@/components/recommendation-comment';
 
-type Track=[string,string];
-
-function localTracks():Track[]{return songs.map(song=>[song[0] as string,song[1] as string]);}
-
-function order(size:number,previous=-1){
- const list=Array.from({length:size},(_,i)=>i);
- for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
- if(size>1&&list[0]===previous)[list[0],list[1]]=[list[1],list[0]];
- return list;
-}
-
-export function MusicMoment({daily}:{daily?:DailyState}){
- const today=daily?.picks?.songs;
- const tracks:Track[]=today?.length?today.map(song=>[song.title,song.artist]):localTracks();
- const signature=`${daily?.picks?.date??''}:${tracks.length}`;
- const [queue,setQueue]=useState<number[]>([]);
- useEffect(()=>{setQueue(order(tracks.length));},[signature,tracks.length]);
- const track=tracks[queue[0]??0]??tracks[0];
+export function MusicMoment({daily,onChat}:{daily?:DailyState;onChat?:(text:string)=>void}){
+ const track=daily?.picks?.songs[0];
  return <section className="music-moment" aria-label="夏彦的随身歌单">
-  <div className="section-label"><Music2 size={18}/> 夏彦的随身歌单 <small>{daily?.picks?`今日 · ${tracks.length} 首`:`${tracks.length} 首`}</small>{daily&&<button className="round" aria-label="更新今日歌单" onClick={daily.refresh} disabled={daily.loading}><RefreshCw size={16} className={daily.loading?'spinning':''}/></button>}</div>
-  <div className="song-detail" aria-live="polite"><strong>{track[0]}</strong><small>{track[1]}</small></div>
-  <p>{daily?.error||'听一首歌，慢慢放松下来。'}</p>
-  <button className="soft-button" disabled={!queue.length} onClick={()=>setQueue(q=>q.length>1?q.slice(1):order(tracks.length,q[0]))}><Shuffle size={16}/> 换一首</button>
+  <div className="section-label"><Music2 size={18}/> 夏彦的随身歌单 <small>{daily?.picks?(daily.picks.date===dateKey(new Date())?'今日分享':`${daily.picks.date} 的分享`):'等待推荐'}</small></div>
+  {track&&<div className="song-detail" aria-live="polite"><strong>{track.title}</strong><small>{track.artist}</small></div>}
+  <RecommendationComment item={track?{kind:'song',title:track.title,creator:track.artist,thought:track.thought,date:daily!.picks!.date}:undefined}/>
+  <p role="status">{daily?.loading?'夏彦正在挑选今天想分享的歌…':daily?.error||(!track?'联网后，让夏彦为你挑一首歌。':'更新于 '+new Date(daily!.picks!.updatedAt).toLocaleString('zh-CN'))}</p>
+  <div className="moment-footer"><button className="soft-button" disabled={!daily||daily.loading} onClick={daily?.refresh}><RefreshCw size={16}/> {track?'再推荐一次':'获取今日推荐'}</button>{track&&<button className="primary" onClick={()=>onChat?.(`想和你聊聊这首歌《${track.title}》，歌手是${track.artist}。你刚才给它的评价是：${track.thought}`)}>聊聊这首歌</button>}</div>
  </section>;
 }

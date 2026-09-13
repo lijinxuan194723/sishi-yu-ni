@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {readAppearance,seasonPhotos} from './lib/ambience.ts';
+import {readAppearance,seasonPhotos} from '../../lib/ambience.ts';
 assert.equal(readAppearance({season:'winter',period:'夜晚',effects:false}).effects,false);
 assert.equal(readAppearance({season:'winter',period:'夜晚'}).effects,true);
 assert.equal(new Set(Object.values(seasonPhotos)).size,4);

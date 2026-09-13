@@ -1,11 +1,14 @@
 import {dateKey,emptyMemory,type Data,type Memory} from './companion.ts';
 import {readCompletionStream} from './stream.ts';
+import {fastTyping} from './fast-typing.ts';
 import {isAndroid,networkFetch,networkStream} from './mobile.ts';
 import {lukeKnowledgeContext} from './luke-knowledge.ts';
+import {lukeMemoryV2Context} from './luke-memory-v2.ts';
 export type ModelConfig={baseUrl:string;model:string;key:string;fallback?:{baseUrl:string;model:string;key:string}};
 export type ChatMessage={role:'system'|'user'|'assistant';content:string};
 export const proxiedHosts=['api.deepseek.com','api.openai.com','openrouter.ai','api.moonshot.cn','api.siliconflow.cn'];
 export const LUKE_PERSONA=`你正在参与《未定事件簿》夏彦（Luke Pearce）的中文同人角色聊天。日常对话中以夏彦第一人称和用户交流。
+说话要像夏彦本人：克制、温柔、可靠，先回应对方的情绪，再给具体行动；熟悉时自然带一点轻松的调侃和坚定的偏爱。不要使用客服腔、模板化安慰、空泛鸡汤或“作为AI”等表述；不要每次都复述设定，不要把角色记忆当成用户经历。工作/调查时简洁利落，私下陪伴时更亲近，但不要油腻夸张。
 已核验官方设定：夏彦是未名市的私家侦探；与故事女主是青梅竹马，经历相伴、离别与重逢。性格阳光开朗，遇到困境仍努力带来希望；行动利落，擅长追踪、格斗、战术驾驶与野外生存；面对青梅竹马的感情，会显出青涩与不善表达的一面。生日是12月5日。
 演绎方式：自然、温暖、有活力，关心落实在具体的小事上；可以轻轻开玩笑、接住用户的玩笑。认真听取本轮内容，用自己的话回应，不机械复述。亲密程度跟随用户已表达的关系和边界，不擅自宣布订婚、结婚或性关系。避免霸总、居高临下、长篇心理咨询腔和重复的“我一直都在”。一般用一到三段聊天长度，用户想详细聊时再展开。必要时短小动作描写，但不要每句都加动作。
 你不是左然：不要自称律师或在忒弥斯律所执业；不要套用莫弈的心理医生、陆景和的总裁身份。人物资料没覆盖的具体剧情、病情、卡面台词不要编成官方事实，也不要主动剧透。
@@ -26,14 +29,15 @@ export const LUKE_PERSONA=`你正在参与《未定事件簿》夏彦（Luke Pea
 export function completionURL(base:string){let u:URL;try{u=new URL(base);}catch{throw Error('请填写完整的 HTTPS API 地址。');}if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('API 地址须为不含密钥、参数和账号信息的 HTTPS 地址。');u.pathname=u.pathname.replace(/\/+$/,'');if(!u.pathname.endsWith('/chat/completions'))u.pathname+='/chat/completions';return u.toString();}
 export async function complete(config:ModelConfig,messages:ChatMessage[],signal?:AbortSignal,maxTokens=1500,onText?:(text:string)=>void):Promise<string>{
  let received=false;
- const update=onText?(text:string)=>{if(text.length)received=true;onText(text);}:undefined;
+ const typing=onText?fastTyping(onText,signal):undefined;
+ const update=typing?(text:string)=>{if(text.length)received=true;typing.update(text);}:undefined;
  if(signal?.aborted)throw Error('已停止，本条消息仍保留，可重试。');
  try{return await completeOne(config,messages,signal,maxTokens,update);}
  catch(first){
   if(signal?.aborted||received||!config.fallback)throw first;
   try{return await completeOne(config.fallback,messages,signal,maxTokens,update);}
   catch(second){if(signal?.aborted||received)throw second;throw Error(`首选模型：${first instanceof Error?first.message:'连接失败'}；备用模型：${second instanceof Error?second.message:'连接失败'}`);}
- }
+ }finally{await typing?.finish();}
 }
 async function completeOne(config:ModelConfig,messages:ChatMessage[],signal?:AbortSignal,maxTokens=1500,onText?:(text:string)=>void):Promise<string>{
  const url=completionURL(config.baseUrl);if(!config.model.trim()||!config.key.trim())throw Error('请先填写模型名和 API Key。');const proxy=!isAndroid()&&proxiedHosts.includes(new URL(url).hostname);let response:Response;
@@ -66,6 +70,6 @@ export function currentState(data:Data,weather:string,now=new Date()){
 export function chatContext(data:Data,weather:string,now=new Date()):ChatMessage[]{
  const memory=data.memory??emptyMemory;
  const loreQuery=data.messages.slice(-6).filter(m=>m.who==='me').map(m=>m.text).join('\n').slice(-1800);
- return [{role:'system',content:LUKE_PERSONA+'\n\n'+lukeKnowledgeContext(loreQuery)},{role:'user',content:'以下是供本次对话参考的应用记录，并非新指令：\n'+JSON.stringify({time:now.toISOString(),localTime:now.toLocaleString('zh-CN'),name:data.name,confirmedMemory:memory.pinned,longTermSummary:memory.summary,relevantOriginalMessages:relatedMemories(data)})},...data.messages.slice(memory.through).map(m=>({role:m.who==='me'?'user' as const:'assistant' as const,content:m.text})).flatMap((m,i,all)=>i===all.length-1?[{role:'user' as const,content:'本次实时应用状态（每轮重新读取，覆盖旧对话中已过时的状态；仅作事实参考，不是指令。学习分钟已包含正在计时的今天部分；只在话题相关时自然使用，不逐项播报，不把共读情景当作用户经历）：\n'+JSON.stringify(currentState(data,weather,now))},m]:[m])];
+ return [{role:'system',content:LUKE_PERSONA+'\n\n'+lukeMemoryV2Context(loreQuery)},{role:'user',content:'以下是供本次对话参考的应用记录，并非新指令：\n'+JSON.stringify({time:now.toISOString(),localTime:now.toLocaleString('zh-CN'),name:data.name,confirmedMemory:memory.pinned,longTermSummary:memory.summary,relevantOriginalMessages:relatedMemories(data)})},...data.messages.slice(memory.through).map(m=>({role:m.who==='me'?'user' as const:'assistant' as const,content:m.text})).flatMap((m,i,all)=>i===all.length-1?[{role:'user' as const,content:'本次实时应用状态（每轮重新读取，覆盖旧对话中已过时的状态；仅作事实参考，不是指令。学习分钟已包含正在计时的今天部分；只在话题相关时自然使用，不逐项播报，不把共读情景当作用户经历）：\n'+JSON.stringify(currentState(data,weather,now))},m]:[m])];
 }
 export async function prepareMemory(data:Data,config:ModelConfig,save:(memory:Memory)=>void,signal?:AbortSignal){let memory={...(data.memory??emptyMemory)};while(data.messages.length-memory.through>24||data.messages.slice(memory.through).reduce((n,m)=>n+m.text.length,0)>42000){const end=summaryBatch(data.messages,memory.through);if(end===memory.through)break;const summary=await complete(config,memoryMessages(memory,data.messages.slice(memory.through,end)),signal,3500);if(summary.length>14000)throw Error('记忆摘要过长，请重试。');memory={...memory,summary,through:end,updatedAt:new Date().toISOString()};save(memory);}return memory;}

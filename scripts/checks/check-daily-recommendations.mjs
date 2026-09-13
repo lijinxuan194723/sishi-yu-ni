@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {dailyRecommendationContext,generateDailyPicks,saveDailyPicks,loadDailyPicks,dailyPicksStale} from '../../lib/daily-picks.ts';
+const storage=new Map();
+globalThis.window={};
+globalThis.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)};
+const data={name:'测试用户',since:'2026-01-01',tasks:[],notes:[],checks:[],messages:[{who:'me',text:'最近想听轻快一点的歌。'}],memory:{pinned:'不喜欢恐怖故事',summary:'喜欢轻快的音乐',through:0,updatedAt:''},contextSharing:{weather:false}};
+const context=dailyRecommendationContext(data,'测试天气');
+assert.equal(JSON.parse(context).confirmedMemory,data.memory.pinned);
+assert.equal(JSON.parse(context).longTermSummary,data.memory.summary);
+assert.equal(JSON.parse(context).recentMessages[0].text,data.messages[0].text);
+assert.equal(JSON.parse(context).state.weather,undefined);
+const result={songs:[{title:'测试歌',artist:'测试歌手',thought:'我想把这首轻快的歌分享给你。'}],book:{title:'测试书',author:'测试作者',kind:'小说',about:'测试简介',thought:'这本书的细节让我想慢慢读给你听。'}};
+const originalFetch=globalThis.fetch;
+let calls=0;
+globalThis.fetch=async(url,init)=>{
+ const body=JSON.parse(init.body);
+ assert.ok(body.messages[0].content.includes('夏彦'));
+ assert.ok(body.messages[1].content.includes(data.memory.pinned));
+ calls++;
+ if(calls===1)return new Response('',{status:503});
+ return Response.json({choices:[{message:{content:JSON.stringify(result)}}]});
+};
+const config={baseUrl:'https://example.com/v1',key:'test-only',model:'primary',fallback:{baseUrl:'https://example.com/v1',key:'test-only',model:'backup'}};
+const picks=await generateDailyPicks(config,context);
+assert.equal(calls,2);
+assert.equal(picks.songs[0].thought,result.songs[0].thought);
+saveDailyPicks(picks);
+assert.deepEqual(loadDailyPicks(),picks);
+assert.equal(dailyPicksStale(picks),false);
+assert.equal(dailyPicksStale({...picks,date:'2000-01-01'}),true);
+globalThis.fetch=async()=>Response.json({choices:[{message:{content:JSON.stringify({...result,songs:[{title:'缺少短评',artist:'测试'}]})}}]});
+await assert.rejects(()=>generateDailyPicks(config,context),/不完整/);
+assert.deepEqual(loadDailyPicks(),picks);
+globalThis.fetch=originalFetch;
+console.log('PASS: memory context, sharing controls, API fallback, required comments, dated cache, failure preserves cache');
+if(process.argv[2]){
+ const live=JSON.parse(await readFile(process.argv[2],'utf8'));
+ const generated=await generateDailyPicks(live,context);
+ assert.ok(generated.songs[0].thought&&generated.book.thought);
+ console.log('LIVE PASS: API returned song and book with comments; synthetic memory only');
+ console.log(JSON.stringify({song:generated.songs[0],book:{title:generated.book.title,thought:generated.book.thought}}));
+}

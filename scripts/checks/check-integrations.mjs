@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {parseData,emptyMemory,togetherDays} from './lib/companion.ts';
-import {complete,completionURL,chatContext,prepareMemory,relatedMemories} from './lib/model.ts';
-import {coordinates,normalizeCaiyun,normalizeMeteo,isFresh,weatherAdvice} from './lib/weather.ts';
+import {parseData,emptyMemory,togetherDays} from '../../lib/companion.ts';
+import {complete,completionURL,chatContext,prepareMemory,relatedMemories} from '../../lib/model.ts';
+import {coordinates,normalizeCaiyun,normalizeMeteo,isFresh,weatherAdvice} from '../../lib/weather.ts';
 const originalFetch=globalThis.fetch;
 const config={baseUrl:'https://api.deepseek.com/v1',model:'test-model',key:'dummy-key'};
 const records=Array.from({length:40},(_,i)=>({who:i%2?'luke':'me',text:i===0?'我喜欢茉莉花，不能吃花生。':`第${i}条聊天记录`,source:i%2?'model':undefined}));

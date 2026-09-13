@@ -5,7 +5,8 @@ export async function swapPhoto(front:HTMLImageElement,back:HTMLImageElement,src
  back.style.opacity='0';back.style.zIndex='1';back.style.objectPosition=position;back.src=src;
  await back.decode();
  if(cancelled())return false;
- // Both writes are painted together, after decode; the old frame stays until then.
+ // Keep the decoded front frame under the incoming image until its fade completes.
+ if(cancelled()){back.style.opacity='0';return false;}
  back.style.opacity='1';back.style.zIndex='0';front.style.opacity='0';
  return true;
 }

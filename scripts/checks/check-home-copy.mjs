@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {quotePool,officialQuotes,originalQuotes,littleMoments,homeCopy,weatherCopy} from './lib/home-copy.ts';
+import {quotePool,officialQuotes,originalQuotes,littleMoments,homeCopy,weatherCopy} from '../../lib/home-copy.ts';
 assert.equal(officialQuotes.length,8);assert.equal(originalQuotes.length,40);assert.equal(quotePool.length,48);assert.equal(littleMoments.length,24);
 assert.equal(new Set(quotePool.map(q=>q.text)).size,48);
 const now=new Date(2026,8,9,12),w={kind:'sun',temperature:20,rainSoon:false};

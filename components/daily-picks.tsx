@@ -1,49 +1,29 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {ModelConfig} from '@/lib/model';
-import {dailyPicksStale,generateDailyPicks,loadDailyPicks,saveDailyPicks,type DailyPicks} from '@/lib/daily-picks';
-
-export type DailyState={picks?:DailyPicks;loading:boolean;error:string;refresh:()=>void};
-
-function usable(config:ModelConfig|undefined):config is ModelConfig{
- return !!config&&!!config.baseUrl.trim()&&!!config.model.trim()&&!!config.key.trim();
-}
-
-/**
- * 每日推荐：打开应用时读本地缓存，若缓存不是今天的就用内置模型 API 生成一份新的。
- * 没有配置模型、或请求失败时保留空状态，界面回退到内置的本地内容。
- */
-export function useDailyPicks(config:ModelConfig|undefined,enabled:boolean,context:string):DailyState{
- const [picks,setPicks]=useState<DailyPicks|undefined>(undefined);
- const [loading,setLoading]=useState(false);
- const [error,setError]=useState('');
- const busy=useRef(false);
-
- const refresh=useCallback(async(force:boolean)=>{
-  if(!usable(config)||busy.current)return;
-  const cached=loadDailyPicks();
-  if(!force&&!dailyPicksStale(cached))return;
-  busy.current=true;
-  setLoading(true);
-  setError('');
-  try{
-   const next=await generateDailyPicks(config,context);
-   saveDailyPicks(next);
-   setPicks(next);
-  }catch(e){
-   setError(e instanceof Error?e.message:'今天的推荐暂时取不到，先用内置的内容。');
-  }finally{
-   busy.current=false;
-   setLoading(false);
-  }
- },[config,context]);
-
+import type {DailySong,DailyBook} from '@/lib/daily-picks';
+import {dateKey} from '@/lib/companion';
+import {appendHistory,generateRecommendation,migrateHistory,readHistory,type Recommendation} from '@/lib/recommendation-history';
+export type DailyState={picks?:{date:string;updatedAt:string;songs:DailySong[];book?:DailyBook};loading:boolean;error:string;refresh:()=>void};
+export function useDailyPicks(config:ModelConfig|undefined,enabled:boolean,context:string){
+ const [history,setHistory]=useState<Recommendation[]>([]),[loading,setLoading]=useState({song:false,book:false}),[error,setError]=useState({song:'',book:''});
+ const busy=useRef({song:false,book:false}),latest=useRef(context);latest.current=context;
+ const request=useCallback(async(kind:'song'|'book',force=false)=>{
+  if(!enabled||busy.current[kind])return;
+  if(!config?.baseUrl||!config.model||!config.key){setError(v=>({...v,[kind]:'模型配置未就绪，请检查主备模型。'}));return;}
+  try{if(!force&&readHistory().some(v=>v.kind===kind&&v.date===dateKey(new Date())))return;}catch{setError(v=>({...v,[kind]:'历史记录无法读取，已暂停更新以保护数据。'}));return;}
+  busy.current[kind]=true;setLoading(v=>({...v,[kind]:true}));setError(v=>({...v,[kind]:''}));
+  try{const result=await generateRecommendation(config,latest.current,kind);appendHistory(result);setHistory(readHistory());}
+  catch(e){setError(v=>({...v,[kind]:e instanceof Error?e.message:'更新失败，历史记录已保留。'}));}
+  finally{busy.current[kind]=false;setLoading(v=>({...v,[kind]:false}));}
+ },[config,enabled]);
  useEffect(()=>{
-  const cached=loadDailyPicks();
-  const fresh=cached&&!dailyPicksStale(cached)?cached:undefined;
-  if(fresh)setPicks(fresh);
-  if(enabled&&usable(config)&&!fresh)void refresh(false);
- },[enabled,config,refresh]);
-
- return {picks,loading,error,refresh:()=>{void refresh(true);}};
+  try{migrateHistory();setHistory(readHistory());}catch{setError({song:'历史读取失败，原数据已保留。',book:'历史读取失败，原数据已保留。'});return;}
+  const wake=()=>{if(document.visibilityState==='visible'){void request('song');void request('book');}};
+  wake();window.addEventListener('online',wake);document.addEventListener('visibilitychange',wake);
+  const timer=setInterval(wake,60000);
+  return()=>{clearInterval(timer);window.removeEventListener('online',wake);document.removeEventListener('visibilitychange',wake);};
+ },[request]);
+ function state(kind:'song'|'book'):DailyState{const item=history.find(v=>v.kind===kind);return {loading:loading[kind],error:error[kind],refresh:()=>{void request(kind,true);},picks:item?{date:item.date,updatedAt:item.updatedAt,songs:kind==='song'?[{title:item.title,artist:item.creator,thought:item.thought}]:[],book:kind==='book'?{title:item.title,author:item.creator,thought:item.thought,about:item.about??'',kind:item.bookKind??'在读'}:undefined}:undefined};}
+ return {music:state('song'),reading:state('book')};
 }

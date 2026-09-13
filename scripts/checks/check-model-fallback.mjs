@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {complete,prepareMemory} from './lib/model.ts';
-import {emptyMemory} from './lib/companion.ts';
+import {complete,prepareMemory} from '../../lib/model.ts';
+import {emptyMemory} from '../../lib/companion.ts';
 const config={baseUrl:'https://primary.example/v1',model:'first',key:'test-first',fallback:{baseUrl:'https://backup.example/v1',model:'second',key:'test-second'}};
 const messages=[{role:'system',content:'夏彦与记忆'},{role:'user',content:'你好'}];
 const original=globalThis.fetch;let calls=[],handler;

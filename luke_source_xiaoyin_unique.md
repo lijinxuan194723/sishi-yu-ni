@@ -1,0 +1,63 @@
+# 《夏彦》相关URL（去重）
+
+共计 57 个独立URL（来自两轮抓取）
+
+| 索引 | URL |
+|---:|---|
+| 1 | https://wd.mihoyo.com/information/detail/3625 |
+| 2 | https://wd.mihoyo.com/information/detail/101186 |
+| 3 | https://wd.mihoyo.com/information/detail/100188 |
+| 4 | https://wd.mihoyo.com/m/main |
+| 5 | https://wd.mihoyo.com/main |
+| 6 | https://wd.mihoyo.com/information/detail/100509 |
+| 7 | https://wd.mihoyo.com/information/detail/111414 |
+| 8 | https://wd.mihoyo.com/information/detail/14352 |
+| 9 | https://wd.mihoyo.com/information/detail/101081 |
+| 10 | https://www.taptap.cn/app/172095/all-info |
+| 11 | https://apps.apple.com/cn/app/%E6%9C%AA%E5%AE%9A%E4%BA%8B%E4%BB%B6%E7%B0%BF/id1507310279 |
+| 12 | https://tot.hoyoverse.com/ja-jp/ |
+| 13 | https://tot.hoyoverse.com/ja-jp/information/all |
+| 14 | https://prtimes.jp/main/html/rd/p/000000066.000048345.html |
+| 15 | https://prtimes.jp/main/html/rd/p/000000108.000096124.html |
+| 16 | https://prtimes.jp/main/html/rd/p/000000222.000096124.html |
+| 17 | https://www.sohu.com/a/411948392_116126 |
+| 18 | https://wiki.biligame.com/cxbs/%E5%88%86%E7%B1%BB%3A%E5%A4%8F%E5%BD%A6 |
+| 19 | https://wiki.biligame.com/cxbs/%E5%A4%8F%E5%BD%A6%E7%94%9F%E6%97%A5%E5%89%A7%E6%83%85 |
+| 20 | https://zh.wikipedia.org/wiki/%E6%9C%AA%E5%AE%9A%E4%BA%8B%E4%BB%B6%E7%B0%BF |
+| 21 | https://tot.hoyoverse.com/m/jp/information/all |
+| 22 | https://tot.hoyoverse.com/jp/information/all |
+| 23 | https://tot.hoyoverse.com/jp/ |
+| 24 | https://tot.hoyoverse.com/jp/information/all/detail/103403 |
+| 25 | https://tot.hoyoverse.com/jp/information/all/detail/103395 |
+| 26 | https://tot.hoyoverse.com/ja/information/event/detail/111451 |
+| 27 | https://tot.hoyoverse.com/jp/information/all/detail/103385 |
+| 28 | https://tot.hoyoverse.com/ja-jp/information/all/detail/103417 |
+| 29 | https://tot.hoyoverse.com/jp/information/event/detail/113958 |
+| 30 | https://tot.hoyoverse.com/m/jp/information/all/detail/114218 |
+| 31 | https://tot.hoyoverse.com/ja-jp/information/all/detail/111931 |
+| 32 | https://tot.hoyoverse.com/jp/information/all/detail/111472 |
+| 33 | https://tot.hoyoverse.com/ja/information/all/detail/100762 |
+| 34 | https://tot.hoyoverse.com/ja-jp/information/all/detail/113184 |
+| 35 | https://tot.hoyoverse.com/ja-jp/information/all/detail/112075 |
+| 36 | https://tot.hoyoverse.com/ja-jp/information/all/detail/112109 |
+| 37 | https://www.4gamer.net/games/471/G047172/20210705009/ |
+| 38 | https://www.4gamer.net/games/471/G047172/20210419034/ |
+| 39 | https://www.4gamer.net/games/471/G047172/20210611046/ |
+| 40 | https://www.4gamer.net/games/471/G047172/20210517007/ |
+| 41 | https://www.gamer.ne.jp/news/202309220086/ |
+| 42 | https://www.gamer.ne.jp/news/202106110026/ |
+| 43 | https://dengekionline.com/articles/76677/ |
+| 44 | https://dengekionline.com/articles/203624/ |
+| 45 | https://www.gamer.ne.jp/news/202401040004/ |
+| 46 | https://dengekionline.com/articles/78641/ |
+| 47 | https://www.pashplus.jp/game_app/213097/ |
+| 48 | https://www.pashplus.jp/game_app/207345/ |
+| 49 | https://www.pashplus.jp/game_app/350408/ |
+| 50 | https://www.pashplus.jp/game_app/374030/ |
+| 51 | https://www.bs-log.com/news/game/20210419_1413224.html |
+| 52 | https://www.bs-log.com/news/game/20210520_1413427.html |
+| 53 | https://gamebiz.jp/news/293922 |
+| 54 | https://www.animate-onlineshop.jp/animetitle/?aid=15444 |
+| 55 | https://www.amiami.jp/top/detail/detail?gcode=GOODS-04580455 |
+| 56 | https://www.amiami.jp/top/detail/detail?gcode=GOODS-04867456&page=top |
+| 57 | https://www.chugai-contents.jp/shopbrand/ct311/ |

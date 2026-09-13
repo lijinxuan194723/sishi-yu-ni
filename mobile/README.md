@@ -2,7 +2,7 @@
 
 检查脚本统一归档在仓库根目录的 `scripts/checks/`，历史记录中的命令均从仓库根目录执行。
 
-安装包：`outputs/android/Summer-Luke-1.0.0.apk`。Android 8.0 及以上，使用系统 Android WebView；旧手机请先更新 Android System WebView。
+安装包：`outputs/android/Four-Seasons-Luke-1.10.0.apk`。Android 8.0 及以上，使用系统 Android WebView；旧手机请先更新 Android System WebView。
 
 ## 安装和使用
 
@@ -298,3 +298,4 @@ SHA256 DD2214577AA7694CF70404BF255F8D224379C30CE6CC7773B9825BF55DE73E0A。
 - tsc、check-home-copy、check-integrations、check-reading-ui及360px截图检查通过；签名、对齐及联网权限通过，versionCode32。
 - SHA256: DB8984A6F98DA3DC05198431F014D48A769424A66DB30BEB88C17C816B78676E
 - [UNRUN] 实体手机显示与阅读来源外链，覆盖安装检查。
+

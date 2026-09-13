@@ -7,8 +7,8 @@ $androidJar=(Get-ChildItem -LiteralPath $SdkRoot -Filter android.jar -Recurse | 
 $aapt=(Get-ChildItem -LiteralPath $SdkRoot -Filter aapt.exe -Recurse | Select-Object -First 1).FullName
 if(!$androidJar -or !$aapt){throw 'Android platform/build-tools are missing'}
 $buildTools=Split-Path $aapt -Parent
-$stage=Join-Path ([IO.Path]::GetTempPath()) ('luke-apk-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 $output=Join-Path $projectRoot 'outputs/android'
+$stage=Join-Path 'F:\LukeBuild' ('luke-apk-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Force -Path "$stage/assets","$stage/classes","$stage/dex",$output,$SigningDirectory | Out-Null
 Push-Location $projectRoot
 try {
@@ -36,12 +36,13 @@ try {
  if(!(Test-Path -LiteralPath $keyFile)){
   if(Test-Path -LiteralPath $passFile){throw 'Signing key is missing; restore it before rebuilding'}
   $bytes=New-Object byte[] 32
-  [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+  $rng=[Security.Cryptography.RandomNumberGenerator]::Create()
+  try{$rng.GetBytes($bytes)}finally{$rng.Dispose()}
   [IO.File]::WriteAllText($passFile,[Convert]::ToBase64String($bytes))
   & keytool -genkeypair -alias luke -keystore $keyFile -storetype PKCS12 -storepass:file $passFile -keypass:file $passFile -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=Luke Summer Personal App'
   if($LASTEXITCODE){throw 'Signing key creation failed'}
  }
- $apk=Join-Path $stage 'Four-Seasons-Luke-1.9.5.apk'
+ $apk=Join-Path $stage 'Four-Seasons-Luke-2.0.0.apk'
  & "$buildTools/apksigner.bat" sign --ks $keyFile --ks-key-alias luke --ks-pass "file:$passFile" --out $apk "$stage/aligned.apk"
  if($LASTEXITCODE){throw 'APK signing failed'}
  & "$buildTools/apksigner.bat" verify --verbose $apk
@@ -50,6 +51,10 @@ try {
  if($LASTEXITCODE){throw 'APK alignment verification failed'}
  & $aapt dump badging $apk | Select-String 'package:|sdkVersion|targetSdkVersion|application-label:|launchable-activity|uses-permission:'
  if($LASTEXITCODE){throw 'Manifest check failed'}
- Copy-Item -LiteralPath $apk -Destination "$output/Four-Seasons-Luke-1.9.5.apk"
+ Copy-Item -LiteralPath $apk -Destination "$output/Four-Seasons-Luke-2.0.0.apk"
  Get-FileHash -LiteralPath $apk | Format-List
 } finally {Pop-Location}
+
+
+
+

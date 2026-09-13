@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {songs,shuffledSongs} from './lib/music.ts';
-import {defaultDates} from './lib/default-dates.ts';
-import {parseData,togetherDays} from './lib/companion.ts';
+import {songs,shuffledSongs} from '../../lib/music.ts';
+import {defaultDates} from '../../lib/default-dates.ts';
+import {parseData,togetherDays} from '../../lib/companion.ts';
 assert.equal(songs.length,30);
 assert.equal(new Set(songs.map(s=>s[0])).size,30);
 for(let last=0;last<30;last++){const deck=shuffledSongs(last);assert.equal(new Set(deck).size,30);assert.notEqual(deck[0],last);assert.ok(deck.every(i=>i>=0&&i<30));}

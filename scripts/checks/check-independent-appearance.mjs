@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {ambienceAt,readAppearance,seasons} from './lib/ambience.ts';
+import {ambienceAt,readAppearance,seasons} from '../../lib/ambience.ts';
 for(const season of seasons){
  const saved=readAppearance({season,period:'auto',effects:true});
  const morning=ambienceAt(new Date(2026,8,9,9),saved),night=ambienceAt(new Date(2026,8,9,20),saved);

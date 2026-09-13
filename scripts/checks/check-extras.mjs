@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {parseData} from './lib/companion.ts';
-import {remainingFocus,finishFocus} from './lib/focus.ts';
+import {parseData} from '../../lib/companion.ts';
+import {remainingFocus,finishFocus} from '../../lib/focus.ts';
 const old={name:'我',since:'2023-07-08',messages:[],notes:[],tasks:[],checks:[]};
 assert.deepEqual(parseData(JSON.stringify(old)),old);
 const now=Date.now(),focus={minutes:25,remainingMs:1500000,endsAt:now+1000};

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {finishStudy,studyTime} from './lib/study.ts';
-import {parseData} from './lib/companion.ts';
-import {focusStats,rangeFor} from './lib/focus-stats.ts';
+import {finishStudy,studyTime} from '../../lib/study.ts';
+import {parseData} from '../../lib/companion.ts';
+import {focusStats,rangeFor} from '../../lib/focus-stats.ts';
 const start=new Date(2026,7,31,23,50).getTime(),end=new Date(2026,8,1,0,20).getTime();
 const base={name:'我',since:'2023-07-08',messages:[],tasks:[],notes:[],checks:[],study:{subject:'数学',startedAt:start}};
 assert.deepEqual(parseData(JSON.stringify(base)),base);

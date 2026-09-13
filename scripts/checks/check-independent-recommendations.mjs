@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {generateRecommendation,appendHistory,readHistory,migrateHistory,mergeFavoriteMemos} from '../../lib/recommendation-history.ts';
+import {emptyMemoWorkspace,parseMemoWorkspace} from '../../lib/memos.ts';
+const storage=new Map();globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};globalThis.window={dispatchEvent(){}};
+const config={baseUrl:'https://example.com/v1',model:'test',key:'test'};
+const requests=[];globalThis.fetch=async(_,init)=>{requests.push(JSON.parse(init.body));return Response.json({choices:[{message:{content:JSON.stringify({title:'作品'+requests.length,creator:'作者',thought:'具体评价',about:'简介'})}}]});};
+const song=await generateRecommendation(config,'记忆','song');appendHistory(song);
+assert.match(requests[0].messages[0].content,/一首真实存在的歌/);
+const book=await generateRecommendation(config,'记忆','book');appendHistory(book);
+assert.match(requests[1].messages[0].content,/一本真实出版的书/);
+const anotherSong=await generateRecommendation(config,'记忆','song');appendHistory(anotherSong);
+assert.equal(readHistory().length,3);assert.equal(readHistory().find(v=>v.kind==='book').id,book.id);
+appendHistory(song);assert.equal(readHistory().length,3);
+storage.set('luke-recommendation-favorites-v1',JSON.stringify([song,book]));migrateHistory();migrateHistory();assert.equal(readHistory().length,3);
+const workspace=mergeFavoriteMemos(emptyMemoWorkspace(),[song,book]);assert.deepEqual(workspace.folders.map(f=>f.name),['音乐评价','书评']);assert.equal(workspace.memos.length,2);
+workspace.memos[0].body='用户编辑';workspace.memos[1].deletedAt=Date.now();assert.equal(mergeFavoriteMemos(workspace,[song,book]),workspace);assert.equal(parseMemoWorkspace(JSON.stringify(workspace)).memos.length,2);
+const before=JSON.stringify(readHistory());globalThis.fetch=async()=>new Response('',{status:500});await assert.rejects(()=>generateRecommendation(config,'记忆','song'));assert.equal(JSON.stringify(readHistory()),before);
+console.log('PASS: independent requests, retained history, idempotent migration, two memo categories, preserved edits/trash, failed API retains data');
