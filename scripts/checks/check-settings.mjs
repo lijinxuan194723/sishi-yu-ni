@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {locationLabel} from './lib/location.ts';
-import {ambienceAt,readAppearance,autoAppearance} from './lib/ambience.ts';
+import {locationLabel} from '../../lib/location.ts';
+import {ambienceAt,readAppearance,autoAppearance} from '../../lib/ambience.ts';
 assert.equal(locationLabel({city:'西安市',locality:'某街道',localityInfo:{administrative:[{name:'陕西省'},{name:'西安市'},{name:'长安区'}]}}),'西安市 · 长安区');
 assert.equal(locationLabel({city:'北京市',localityInfo:{administrative:[{name:'北京市'},{name:'海淀区'}]}}),'北京市 · 海淀区');
 assert.equal(locationLabel({city:'香港',localityInfo:{administrative:[{name:'香港特别行政区'},{name:'沙田区'}]}}),'香港 · 沙田区');

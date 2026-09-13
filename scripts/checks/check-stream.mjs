@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {readCompletionStream} from './lib/stream.ts';
-import {complete} from './lib/model.ts';
+import {readCompletionStream} from '../../lib/stream.ts';
+import {complete} from '../../lib/model.ts';
 const encoder=new TextEncoder();const event=t=>'data: '+JSON.stringify({choices:[{delta:{content:t}}]})+'\r\n\r\n';
 let source,first;const firstToken=new Promise(resolve=>first=resolve),seen=[];
 const stream=new ReadableStream({start(c){source=c;}});

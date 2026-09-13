@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {parseData} from './lib/companion.ts';
-import {chatContext,currentState} from './lib/model.ts';
-import {editStudyRecord} from './lib/study.ts';
+import {parseData} from '../../lib/companion.ts';
+import {chatContext,currentState} from '../../lib/model.ts';
+import {editStudyRecord} from '../../lib/study.ts';
 const reading={title:'自定义书',author:'作者',progress:'第 52 页',thought:'喜欢这一段',updatedAt:new Date().toISOString()};
 const record={at:new Date(2026,8,8,23).toISOString(),minutes:120,group:'数学'};
 const data={name:'冬清',since:'2023-07-08',messages:[{who:'me',text:'你好'},{who:'luke',text:'收到一半',interrupted:true}],tasks:[],notes:[],checks:[],books:[reading],reading,focusLog:[record],contextSharing:{weather:false,reading:false,study:false,dates:false}};

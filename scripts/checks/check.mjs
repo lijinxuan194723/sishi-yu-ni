@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {parseData,dateKey,companionReply} from './lib/companion.ts';
+import {parseData,dateKey,companionReply} from '../../lib/companion.ts';
 const data={name:'我',since:'2024-02-29',messages:[{who:'me',text:'hello'}],tasks:[{id:'1',date:'2026-09-09',text:'散步',done:false}],notes:[{date:'2026-09-09',text:'今天很好'}],checks:['2026-09-09']};
 assert.deepEqual(parseData(JSON.stringify(data)),data);
 assert.throws(()=>parseData(JSON.stringify({...data,since:'2025-02-29'})));

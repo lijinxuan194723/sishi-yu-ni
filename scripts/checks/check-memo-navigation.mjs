@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {nextMemoBackLayer} from '../../lib/memo-navigation.ts';
+assert.equal(nextMemoBackLayer({editor:true}), 'editor');
+assert.equal(nextMemoBackLayer({notebooks:true}), 'notebooks');
+assert.equal(nextMemoBackLayer({menu:true,editor:true}), 'menu');
+assert.equal(nextMemoBackLayer({move:true,menu:true,editor:true}), 'move');
+assert.equal(nextMemoBackLayer({selection:true,category:true}), 'selection');
+assert.equal(nextMemoBackLayer({creatingFolder:true,notebooks:true}), 'creatingFolder');
+assert.equal(nextMemoBackLayer({preview:true,editor:true}), 'preview');
+assert.equal(nextMemoBackLayer({search:true,category:true}), 'search');
+assert.equal(nextMemoBackLayer({category:true}), 'category');
+assert.equal(nextMemoBackLayer({}), null);
+console.log('PASS: memo return layers');

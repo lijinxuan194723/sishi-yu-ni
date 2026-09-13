@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {dailyScenes,dailyScene,occasion} from './lib/daily.ts';
-import {parseData,dateKey} from './lib/companion.ts';
-import {locationLabel,resolveDistrict} from './lib/location.ts';
+import {dailyScenes,dailyScene,occasion} from '../../lib/daily.ts';
+import {parseData,dateKey} from '../../lib/companion.ts';
+import {locationLabel,resolveDistrict} from '../../lib/location.ts';
 assert.equal(dailyScenes.reduce((n,g)=>n+g.items.length,0),120);
 assert.equal(new Set(dailyScenes.flatMap(g=>g.items)).size,120);
 for(const h of [1,7,10,13,16,20]){const now=new Date(2026,8,9,h);assert.equal(new Set(Array.from({length:20},(_,i)=>dailyScene(now,i).id)).size,20);assert.notEqual(dailyScene(now).id,dailyScene(new Date(2026,8,10,h)).id);}

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {currentState,chatContext,memoryMessages} from './lib/model.ts';
-import {parseData,emptyMemory} from './lib/companion.ts';
-import {isFresh} from './lib/weather.ts';
+import {currentState,chatContext,memoryMessages} from '../../lib/model.ts';
+import {parseData,emptyMemory} from '../../lib/companion.ts';
+import {isFresh} from '../../lib/weather.ts';
 const now=new Date(2026,8,9,0,10),data={name:'冬清',since:'2023-07-08',messages:[{who:'me',text:'今天学了多久？'}],tasks:[],notes:[],checks:[],reading:{title:'活着',author:'余华',updatedAt:now.toISOString()},study:{subject:'英语',startedAt:new Date(2026,8,8,23,50).getTime()},focusLog:[{at:new Date(2026,8,9,0,0).toISOString(),minutes:3.8,group:'数学'},{at:new Date(2026,8,8,10).toISOString(),minutes:60,group:'数学'}]};
 assert.deepEqual(parseData(JSON.stringify(data)).reading,data.reading);
 assert.throws(()=>parseData(JSON.stringify({...data,reading:{title:'',author:'',updatedAt:'bad'}})));

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {parseData} from './lib/companion.ts';
-import {defaultPomodoro,pomodoroFocus,finishFocus} from './lib/focus.ts';
+import {parseData} from '../../lib/companion.ts';
+import {defaultPomodoro,pomodoroFocus,finishFocus} from '../../lib/focus.ts';
 let data={name:'我',since:'2023-07-08',messages:[],notes:[],tasks:[],checks:[],focus:pomodoroFocus({...defaultPomodoro})};
 function finish(){const end=Date.now();data.focus={...data.focus,endsAt:end};data={...data,...finishFocus(data,end)};assert.deepEqual(finishFocus(data,end),{});data=parseData(JSON.stringify(data));}
 for(let i=1;i<=4;i++){finish();assert.equal(data.focus.pomodoro.completed,i);assert.equal(data.focusLog.length,i);assert.equal(data.focus.pomodoro.phase,i===4?'long':'short');assert.equal(data.focus.minutes,i===4?15:5);assert.equal(data.focus.endsAt,undefined);finish();assert.equal(data.focus.pomodoro.phase,'work');assert.equal(data.focus.minutes,25);assert.equal(data.focus.pomodoro.completed,i===4?0:i);assert.equal(data.focusLog.length,i);}

@@ -3,7 +3,8 @@ export function locationLabel(p:any){
  const names=(Array.isArray(p?.localityInfo?.administrative)?p.localityInfo.administrative:[]).map((a:any)=>typeof a?.name==='string'?a.name:'').filter(Boolean);
  const geo=p?.features?.[0]?.properties?.geocoding;
  const a=p?.address??geo??{};
- const district=[...names].reverse().concat([geo?.admin?.level6,geo?.admin?.level7,geo?.admin?.level8,a.county,a.city_district,a.city,a.district,a.borough,a.suburb,p?.locality]).find((s:unknown)=>typeof s==='string'&&/(区|县|旗)$/.test(s)&&!/(自治区|特别行政区|社区|小区)$/.test(s));
+ const candidates=[...names].reverse().concat([geo?.admin?.level6,geo?.admin?.level7,geo?.admin?.level8,a.county,a.city_district,a.district,a.borough,a.suburb,p?.locality]);
+ const district=candidates.find((s:unknown)=>typeof s==='string'&&/(区|县|旗)$/.test(s)&&!/(自治区|特别行政区|社区|小区)$/.test(s))??candidates.find((s:unknown)=>typeof s==='string'&&s.trim()&&!/(市|省|自治区|特别行政区|社区|小区)$/.test(s));
  if(!district)throw Error('未能获取县区名称，请重试定位。');
  const city=typeof p?.city==='string'?p.city:typeof a.city==='string'?a.city:'';
  return [...new Set([city,district].filter(Boolean))].join(' · ').slice(0,80);

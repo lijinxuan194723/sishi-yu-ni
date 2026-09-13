@@ -1,10 +1,12 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import Page from '../app/page';
+import {ErrorBoundary} from '../components/error-boundary';
 import '../app/globals.css';
+import '../app/theme.css';
 import '../app/ambience.css';
 import '../app/notes-polish.css';
 import '../app/startup-splash.css';
 import '../app/startup-reveal.css';
 import '../app/startup-nav.css';
-createRoot(document.getElementById('root')!).render(<Page/>);
+createRoot(document.getElementById('root')!).render(<ErrorBoundary><Page/></ErrorBoundary>);

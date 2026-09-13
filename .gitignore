@@ -77,3 +77,6 @@ signing-password.txt
 *.jks
 *.p12
 *.pfx
+
+# vendored third-party checkout (has its own .git, must not be nested-committed)
+/scrapling_repo/

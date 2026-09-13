@@ -83,7 +83,7 @@
   padding:0;
   border-radius:14px;
   background:var(--season-accent);
-  color:#fff;
+  color:var(--on-accent);
   box-shadow:0 5px 14px color-mix(in srgb,var(--season-accent) 22%,transparent);
 }
 .composer>.primary svg{
@@ -95,7 +95,7 @@
    season instead of replacing it with one fixed photograph. */
 :root[data-night="true"] .chat-head{
   background-image:
-    linear-gradient(90deg,color-mix(in srgb,var(--scene-paper) 97%,#0d1722),color-mix(in srgb,var(--scene-paper) 76%,transparent)),
+    linear-gradient(90deg,color-mix(in srgb,var(--scene-paper) 97%,var(--season-soft)),color-mix(in srgb,var(--scene-paper) 76%,transparent)),
     var(--season-photo) !important;
   background-position:center,var(--photo-y);
   background-size:cover;
@@ -123,10 +123,6 @@
 }
 
 /* Slightly distinct night accents keep spring/summer/autumn/winter recognizable. */
-:root[data-night="true"][data-season="spring"]{--season-accent:#5d8f80}
-:root[data-night="true"][data-season="summer"]{--season-accent:#4d8798}
-:root[data-night="true"][data-season="autumn"]{--season-accent:#9a7659}
-:root[data-night="true"][data-season="winter"]{--season-accent:#7f86b0}
 
 .page-bar .bar-actions>.round,
 .page-bar .bar-actions>.bar-today,
@@ -147,3 +143,71 @@
 @media(prefers-reduced-motion:reduce){
   .page-bar .bar-actions>.round,.page-bar .bar-actions>.bar-today,.composer,.composer>textarea,.composer>.primary{transition:none!important}
 }
+
+/* A matched action pair, scoped to the private-chat composer. */
+:root .chat-page .composer{
+  align-items:flex-end;
+  gap:8px;
+  padding:10px 12px;
+}
+:root .chat-page .composer>textarea{
+  min-width:0;
+  border-radius:14px;
+  height:46px;
+  min-height:46px;
+}
+:root .chat-page .composer>button[aria-label="添加图片或文件"],
+:root .chat-page .composer>.primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 46px;
+  width:46px;
+  min-width:46px;
+  height:46px;
+  min-height:46px;
+  padding:0;
+  border:1px solid var(--scene-border);
+  border-radius:14px;
+  box-shadow:none;
+}
+:root .chat-page .composer>button[aria-label="添加图片或文件"]{
+  background:var(--scene-paper);
+  color:var(--season-accent);
+}
+:root .chat-page .composer>.primary{
+  background:var(--season-accent);
+  border-color:transparent;
+  color:var(--on-accent);
+}
+:root .chat-page .composer>button svg{width:20px;height:20px}
+:root .chat-page .messages{gap:18px;padding:18px 16px}
+:root .chat-page .message p{border-radius:6px 18px 18px 18px;line-height:1.75}
+:root .chat-page .message.mine p{border-radius:18px 6px 18px 18px}
+@media(max-width:360px){
+  :root .chat-page .composer{gap:6px;padding-inline:8px}
+  :root .chat-page .messages{padding-inline:12px}
+}
+
+/* Put the home copy at the lower part of the artwork on every mobile build. */
+.hero.hero-gallery .hero-copy{
+  position:absolute;
+  left:0;
+  bottom:22px;
+  width:min(680px,70%);
+  padding:0 38px!important;
+}
+@media(max-width:800px){
+  .hero.hero-gallery .hero-copy{width:70%;padding-inline:26px!important}
+}
+@media(max-width:600px){
+  .hero.hero-gallery .hero-copy{left:0;right:0;bottom:22px;width:100%;padding:0 24px!important}
+}
+
+.edit-status{font-size:0;color:var(--scene-muted);padding:8px 12px 0}
+.edit-status .text-button{display:inline-flex;margin:0 0 0 12px;padding:0;color:var(--season-accent)}
+.message-edit{display:none!important}
+/* The model summary is redundant with the fields below. */
+.settings [data-slot="tabs-content"] > section.settings-stack:first-child{display:none!important}
+/* Remove the book carousel controls; the card keeps one stable book view. */
+.reading-moment>.reading-actions:first-of-type{display:none!important}

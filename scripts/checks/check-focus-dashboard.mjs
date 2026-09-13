@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {dateKey,parseData} from './lib/companion.ts';
-import {pomodoroFocus,defaultPomodoro,finishFocus} from './lib/focus.ts';
-import {focusStats,rangeFor} from './lib/focus-stats.ts';
+import {dateKey,parseData} from '../../lib/companion.ts';
+import {pomodoroFocus,defaultPomodoro,finishFocus} from '../../lib/focus.ts';
+import {focusStats,rangeFor} from '../../lib/focus-stats.ts';
 const logs=[{at:new Date(2026,8,8,23,59).toISOString(),minutes:25,title:'读书',kind:'pomodoro'},{at:new Date(2026,8,9,0,1).toISOString(),minutes:10}];
 const stats=focusStats(logs,'2026-09-08','2026-09-09');assert.equal(stats.count,2);assert.equal(stats.minutes,35);assert.equal(stats.average,17.5);assert.equal(stats.hours[23],25);assert.equal(stats.daily['2026-09-09'],10);
 assert.equal(focusStats(logs,'2026-09-09','2026-09-09').count,1);assert.equal(focusStats([],'2026-09-09','2026-09-09').average,0);

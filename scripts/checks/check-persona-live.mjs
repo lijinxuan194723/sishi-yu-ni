@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {chatContext,complete} from './lib/model.ts';
+import {chatContext,complete} from '../../lib/model.ts';
 const config=JSON.parse(await readFile(process.env.LUKE_TEST_CONFIG,'utf8'));
 const data={name:'冬清',since:'2023-07-08',messages:[],tasks:[],notes:[],checks:[]};
 const results=[];
